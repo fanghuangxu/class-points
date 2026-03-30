@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>班级积分管理系统</title>
+  
+  <!-- Manifest -->
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#4CAF50">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="积分系统">
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- External Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/TweenMax.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/winwheel@1.0.1/dist/Winwheel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Main Script -->
+  <script src="script.js"></script>
+  
+  <!-- Service Worker Registration -->
+  <script>
+    // 注册 Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(registration => {
+            console.log('✅ Service Worker 注册成功:', registration.scope);
+            
+            // 检查更新
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              console.log('🔄 发现新版本 Service Worker');
+              
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  console.log('✨ 新版本已安装，刷新页面以应用更新');
+                  // 可选：提示用户刷新页面
+                  if (confirm('发现新版本，是否刷新页面应用更新？')) {
+                    newWorker.postMessage({ type: 'SKIP_WAITING' });
+                    window.location.reload();
+                  }
+                }
+              });
+            });
+          })
+          .catch(error => {
+            console.error('❌ Service Worker 注册失败:', error);
+          });
+      });
+      
+      // 监听 Service Worker 控制器变化
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        console.log('🔄 Service Worker 控制器已更新');
+      });
+    }
+  </script>
+</head>
+
+<body>
+  <header>
+    <div class="stats-container">
+      <div class="stat-item">
+        <div class="icon groups">👨‍👩‍👧‍👦</div>
+        <div>
+          <div class="label">小组数量</div>
+          <div class="value" id="stat-group-count">0</div>
+        </div>
+      </div>
+      <div class="stat-item">
+        <div class="icon students">🎓</div>
+        <div>
+          <div class="label">学生总数</div>
+          <div class="value" id="stat-student-count">0</div>
+        </div>
+      </div>
+      <div class="stat-item">
+        <div class="icon avg-points">⭐</div>
+        <div>
+          <div class="label">平均积分</div>
+          <div class="value" id="stat-avg-points">0</div>
+        </div>
+      </div>
+      <div class="stat-item">
+        <div class="icon total-points">🏆</div>
+        <div>
+          <div class="label">总积分</div>
+          <div class="value" id="stat-total-points">0</div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="stats-container">
+    </div>
+
+    <div class="class-management-area">
+      <span id="current-class-display">当前班级：**请选择**</span>
+      <button id="btn-open-class-modal" class="btn btn-primary btn-sm" style="margin-left: 10px;">切换/管理班级</button>
+    </div>
+
+
+    <div><button class="btn btn-danger" id="btn-clear-data">🗑️ 清除数据</button></div>
+  </header>
+
+  <nav>
+    <div class="nav-header">积分管理系统</div>
+    <ul>
+      <li class="nav-item active" data-view="dashboard">📊 班级概览</li>
+      <li class="nav-item" data-view="group-management">📚 小组管理</li>
+      <li class="nav-item" data-view="student-management">🎓 学生管理</li>
+      <li class="nav-item" data-view="rewards-store">💳 积分商城</li>
+      <li class="nav-item" data-view="turntable">☢️ 幸运大转盘</li>
+      <li class="nav-item" data-view="record-management">🏷️ 积分记录</li>
+      <li class="nav-item" data-view="print">🖨️ 打印中心</li>
+      <li class="nav-item" id="nav-about-author" style="cursor: pointer;">✍️ 关于作者</li>
+    </ul>
+    <div class="nav-footer">
+      <button class="btn btn-green" id="btn-export-data">📤 导出数据</button>
+      <button class="btn btn-purple" id="btn-import-data">📥 导入数据</button>
+      <input type="file" id="import-file-input" accept=".json, .xlsx, .xls" style="display:none;">
+    </div>
+  </nav>
+
+  <main id="main-content">
+    <div id="view-dashboard" class="active">
+      <div class="page-header">
+        <h2>班级概览</h2>
+        <div class="header-actions">
+
+          <div class="search-box"><span>🔍</span><input type="text" id="search-input" placeholder="搜索学生..."></div>
+          <div class="sort-controls">
+            <button class="btn sort-btn" data-sort="points">积分 <span class="sort-indicator"></span></button>
+            <button class="btn sort-btn" data-sort="name">姓名 <span class="sort-indicator"></span></button>
+          </div>
+          <button class="btn btn-pink" id="btn-add-student-points">🌟 为学生加分</button>
+          <button class="btn btn-purple" id="btn-add-group-points">✨ 为小组加分</button>
+          <button class="btn btn-green" id="btn-add-all-points">🎉 为全班加分</button>
+        </div>
+      </div>
+
+      <div class="dashboard-layout">
+        <div class="student-cards-grid-wrapper">
+          <div class="student-cards-grid" id="student-cards-container">
+          </div>
+        </div>
+
+        <div class="leaderboard-container">
+          <div class="leaderboard-header">
+            <h3 id="leaderboard-title">🏆 积分排行榜</h3>
+          </div>
+          <div class="leaderboard-toggle">
+            <button class="toggle-btn active" data-type="realtime">实时</button>
+            <button class="toggle-btn" data-type="total">累计</button>
+            <button class="toggle-btn" data-type="deduction">扣分</button>
+          </div>
+          <ol id="leaderboard-list">
+          </ol>
+        </div>
+
+
+      </div>
+    </div>
+
+
+    <div id="view-group-management">
+      <div class="page-header">
+        <h2>小组管理</h2>
+        <button class="btn btn-primary" id="btn-add-group">＋ 新增小组</button>
+      </div>
+
+      <div class="group-management-layout">
+        <div class="group-table-wrapper">
+          <table class="styled-table" id="group-table">
+            <thead>
+              <tr>
+                <th>小组名称</th>
+                <th>成员数量</th>
+                <th>人均积分</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="leaderboard-container">
+          <div class="leaderboard-header">
+            <h3 id="group-leaderboard-title">🏆 小组积分排行榜</h3>
+          </div>
+          <div class="leaderboard-toggle" id="group-leaderboard-toggle">
+            <button class="toggle-btn active" data-type="avg">人均分</button>
+            <button class="toggle-btn" data-type="total">总分</button>
+          </div>
+          <ol id="group-leaderboard-list">
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-student-management">
+      <div class="page-header">
+        <h2>学生管理</h2>
+        <div class="header-actions">
+          <button class="btn btn-warning" id="btn-batch-qr">📱 二维码</button>
+          <button class="btn btn-purple" id="btn-paste-import-students">📋 手动导入学生</button>
+          <button class="btn btn-primary" id="btn-add-student">＋ 新增学生</button>
+          <button class="btn btn-info" id="btn-open-quick-reason-modal">⚙️ 管理快捷理由</button>
+          <button class="btn btn-green" id="btn-open-achievement-modal">🏆 管理成就</button>
+        </div>
+      </div>
+      <table class="styled-table" id="student-table">
+        <thead>
+          <tr>
+            <th class="sortable" data-sort="id">学生ID <span></span></th>
+            <th class="sortable" data-sort="name">姓名 <span></span></th>
+            <th>小组</th>
+            <th class="sortable" data-sort="points">积分 <span></span></th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+
+    <div id="view-rewards-store">
+      <div class="page-header">
+        <h2>积分商城</h2>
+        <button class="btn btn-primary" id="btn-add-reward">＋ 上架新奖品</button>
+      </div>
+      <div class="rewards-grid" id="rewards-container">
+      </div>
+    </div>
+
+    </div>
+    <div id="view-turntable">
+      <div class="page-header">
+        <h2>幸运大转盘</h2>
+      </div>
+      <div class="turntable-main-layout">
+        <div class="turntable-wrapper">
+          <canvas id="turntable-canvas" width="650" height="650"></canvas>
+          <div class="turntable-pointer"></div>
+          <button class="btn btn-primary btn-spin" id="btn-spin">开始转动</button>
+        </div>
+        <div class="turntable-controls">
+          <div class="turntable-setting">
+            <label for="turntable-cost-input">单次抽奖消耗积分:</label>
+            <input type="number" id="turntable-cost-input" value="2" min="0">
+          </div>
+          <div class="page-header">
+            <h4>奖品管理</h4>
+            <button class="btn btn-primary btn-sm" id="btn-add-turntable-prize">＋ 新增奖品</button>
+          </div>
+          <table class="styled-table" id="turntable-prize-table">
+            <thead>
+              <tr>
+                <th>奖品名称</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-record-management">
+      <div class="page-header">
+        <h2>所有积分记录</h2>
+      </div>
+      <table class="styled-table" id="record-table">
+        <thead>
+          <tr>
+            <th>时间</th>
+            <th>学生</th>
+            <th>分值变化</th>
+            <th>原因</th>
+            <th>最终积分</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div id="view-print">
+      <div class="page-header">
+        <h2>打印中心</h2>
+      </div>
+
+      <div class="print-options-container">
+
+        <div class="print-option-card">
+          <h3>全体学生积分总览</h3>
+          <p>生成包含所有学生ID、姓名、实时积分、累计积分和扣分积分的汇总表格进行打印。</p>
+          <button class="btn btn-primary" id="btn-print-summary">🖨️ 打印总览</button>
+        </div>
+
+        <div class="print-option-card">
+          <h3>单个学生积分明细</h3>
+          <p>选择一个学生，生成并打印他/她的所有详细积分变动记录。</p>
+          <div class="print-selection">
+            <select id="print-student-select">
+              <option value="">-- 请选择学生 --</option>
+            </select>
+            <button class="btn btn-green" id="btn-print-details">📄 打印明细</button>
+          </div>
+        </div>
+
+        <div class="print-option-card">
+          <h3>批量学生积分明细</h3>
+          <p>选择多个学生，生成并打印他/她们的详细积分变动记录。每个学生将单独占一页。</p>
+
+          <div class="print-selection-batch">
+
+            <div class="print-batch-actions">
+              <a href="#" id="btn-print-batch-select-all">✅ 全选</a>
+              <a href="#" id="btn-print-batch-deselect-all">⬜ 全部取消</a>
+            </div>
+            <div id="print-batch-student-list" class="student-checkbox-container">
+              <p>正在加载学生列表...</p>
+            </div>
+            <button class="btn btn-purple" id="btn-print-batch-details">🖨️ 批量打印明细</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+
+    <div id="view-student-portal" style="display: none;">
+      <div class="portal-container">
+        <div class="portal-header">
+          <div class="portal-avatar">🎓</div>
+          <h2 id="portal-student-name">学生姓名</h2>
+          <div class="portal-badge" id="portal-achievement">暂无称号</div>
+        </div>
+        
+        <div class="portal-score-card">
+          <div class="portal-score-item">
+            <div class="label">当前积分</div>
+            <div class="value" id="portal-points">0</div>
+          </div>
+          <div class="portal-score-item">
+            <div class="label">累计积分</div>
+            <div class="value" id="portal-total-points">0</div>
+          </div>
+        </div>
+
+        <div class="portal-section">
+          <h3>📊 班级排名</h3>
+          <p id="portal-rank-text">正在计算...</p>
+        </div>
+
+        <div class="portal-footer">
+          <p>数据生成时间: <span id="portal-gen-time">--</span></p>
+          <p>班级积分管理系统 &copy; G.L.Wu</p>
+        </div>
+      </div>
+    </div>
+    
+    <div id="qr-print-area" style="display:none;"></div>
+
+  </main>
+
+
+  <div id="points-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>调整学生积分</h2>
+        <span class="close-btn">&times;</span>
+      </div>
+      <form id="points-form">
+        <p>正在为学生: <strong id="points-student-name"></strong> 调整积分</p>
+
+        <input type="hidden" id="points-student-id-input">
+
+        <label for="points-change-amount">增减分数 (正数加分, 负数扣分):</label>
+        <input type="number" id="points-change-amount" required placeholder="例如: 5 或 -3">
+
+        <label for="points-change-reason">原因 (将记录在日志中):</label>
+        <input type="text" id="points-change-reason" required placeholder="例如：上课积极回答问题">
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">确认调整</button>
+        </div>
+      </form>
+
+      <label class="quick-reason-label" style="margin-top: 15px;">快捷理由:</label>
+
+      <div id="quick-reason-buttons-container">
+      </div>
+    </div>
+  </div>
+
+  <div id="student-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="student-modal-title">管理学生</h2><span class="close-btn">&times;</span>
+      </div>
+      <form id="student-form">
+        <input type="hidden" id="student-id">
+
+        <label for="student-id-display">学生ID:</label>
+        <input type="text" id="student-id-display" required>
+        <label for="student-name">姓名:</label>
+        <input type="text" id="student-name" required>
+        <label for="student-group">小组:</label>
+        <select id="student-group"></select>
+        <div class="form-actions"><button type="submit" class="btn btn-primary">保存</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div id="group-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>管理小组</h2><span class="close-btn">&times;</span>
+      </div>
+      <form id="group-form">
+        <input type="hidden" id="group-id">
+        <label for="group-name">小组名称:</label>
+        <input type="text" id="group-name" required>
+        <div class="form-actions"><button type="submit" class="btn btn-primary">保存</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div id="bulk-group-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="bulk-group-modal-title">批量修改小组成员</h2>
+        <span class="close-btn">&times;</span>
+      </div>
+      <form id="bulk-group-form">
+        <p>正在为小组: <strong id="bulk-group-name"></strong> 管理成员</p>
+        <input type="hidden" id="bulk-group-id">
+
+        <div class="student-selection-container">
+          <div class="student-list-box">
+            <strong>未分组学生</strong>
+            <ul id="unassigned-students-list"></ul>
+          </div>
+          <div class="student-list-box">
+            <strong>小组成员</strong>
+            <ul id="assigned-students-list"></ul>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">保存更改</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="notification-container"></div>
+
+  <div id="reward-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="reward-modal-title">管理奖品</h2>
+        <span class="close-btn">&times;</span>
+      </div>
+      <form id="reward-form">
+        <input type="hidden" id="reward-id">
+        <label for="reward-name">奖品名称:</label>
+        <input type="text" id="reward-name" required>
+        <label for="reward-cost">所需积分:</label>
+        <input type="number" id="reward-cost" required min="1">
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">保存奖品</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="redeem-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>兑换奖品</h2>
+        <span class="close-btn">&times;</span>
+      </div>
+      <form id="redeem-form">
+        <input type="hidden" id="redeem-reward-id">
+        <div class="redeem-info">
+          <p><strong>奖品:</strong> <span id="redeem-reward-name"></span></p>
+          <p><strong>花费:</strong> <span id="redeem-reward-cost"></span> 积分</p>
+        </div>
+<label>选择兑换的学生 (仅显示积分足够的学生):</label>
+<div class="print-batch-actions" style="margin-top: 5px;">
+  <a href="#" id="btn-redeem-select-all">✅ 全选</a>
+  <a href="#" id="btn-redeem-deselect-all" style="margin-left: 15px;">⬜ 取消</a>
+</div>
+<div id="redeem-student-checkbox-container" class="student-checkbox-container" style="max-height: 200px;">
+  </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">确认兑换</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="group-points-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>为小组加分</h2>
+        <span class="close-btn">&times;</span>
+      </div>
+      <form id="group-points-form">
+        <label for="group-points-select">选择小组:</label>
+        <select id="group-points-select" required></select>
+
+        <label for="group-points-amount">增减分数 (正数加分, 负数扣分):</label>
+        <input type="number" id="group-points-amount" required>
+
+        <label for="group-points-reason">原因:</label>
+        <input type="text" id="group-points-reason" required placeholder="例如：活动奖状、表现优秀等">
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">确认加分</button>
+        </div>
+      </form>
+
+      <label class="quick-reason-label" style="margin-top: 15px;">快捷理由:</label>
+      <div id="group-quick-reason-container">
+      </div>
+    </div>
+  </div>
+
+  <div id="student-points-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>批量为学生加/扣分</h2>
+        <span class="close-btn">&times;</span>
+      </div>
+      <form id="student-points-form">
+        <label>选择学生 (可多选):</label>
+        <div id="student-points-checkbox-container" class="student-checkbox-container">
+        </div>
+
+        <label for="student-points-amount">增减分数 (正数加分, 负数扣分):</label>
+        <input type="number" id="student-points-amount" required placeholder="例如: 5 或 -3">
+
+        <label for="student-points-reason">原因:</label>
+        <input type="text" id="student-points-reason" required placeholder="例如：完成小组任务">
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">确认操作</button>
+        </div>
+      </form>
+      <label class="quick-reason-label" style="margin-top: 15px;">快捷理由:</label>
+      <div id="student-quick-reason-container">
+      </div>
+    </div>
+  </div>
+
+  <div id="all-points-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>为全班加/扣分</h2>
+        <span class="close-btn">&times;</span>
+      </div>
+      <form id="all-points-form">
+        <label for="all-points-amount">增减分数 (正数加分, 负数扣分):</label>
+        <input type="number" id="all-points-amount" required>
+
+        <label for="all-points-reason">原因:</label>
+        <input type="text" id="all-points-reason" required placeholder="例如：班级集体奖励等">
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">确认操作</button>
+        </div>
+      </form>
+      <label class="quick-reason-label" style="margin-top: 15px;">快捷理由:</label>
+      <div id="all-quick-reason-container">
+      </div>
+    </div>
+  </div>
+
+  <div id="turntable-prize-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="turntable-prize-modal-title">管理转盘奖品</h2>
+        <span class="close-btn">&times;</span>
+      </div>
+      <form id="turntable-prize-form">
+        <input type="hidden" id="turntable-prize-id">
+        <label for="turntable-prize-name">奖品名称:</label>
+        <input type="text" id="turntable-prize-name" required>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">保存奖品</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="spin-select-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>选择抽奖学生</h2>
+        <span class="close-btn">&times;</span>
+      </div>
+      <form id="spin-select-form">
+        <p>本次抽奖将消耗 <strong id="spin-cost-display"></strong> 积分。</p>
+        <label for="spin-student-select">选择学生:</label>
+        <select id="spin-student-select" required></select>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">确认并抽奖</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="notification-container"></div>
+  <div class="modal" id="confirm-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="confirm-modal-title">请确认</h2>
+        <span class="close-btn" id="confirm-close-btn">&times;</span>
+      </div>
+      <p id="confirm-modal-text">您确定要执行此操作吗？</p>
+      <div class="form-actions">
+        <button type="button" class="btn" id="confirm-cancel-btn">取消</button>
+        <button type="button" class="btn btn-danger" id="confirm-ok-btn">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="paste-import-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>粘贴导入学生名单</h2>
+        <span class="close-btn">&times;</span>
+      </div>
+      <form id="paste-import-form">
+        <label for="paste-student-names">请将学生姓名粘贴到下方，每行一个:</label>
+        <textarea id="paste-student-names" rows="10" placeholder="例如:&#10;张三&#10;李四&#10;王五"></textarea>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">确认导入</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="export-choice-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>导出数据</h2>
+        <span class="close-btn">&times;</span>
+      </div>
+      <div class="export-choices" style="padding: 20px 0;">
+        <h3 style="margin-bottom: 15px; color: #333;">📦 选择导出范围</h3>
+        <div style="display: flex; gap: 10px; margin-bottom: 25px;">
+          <button id="btn-export-scope-current" class="btn btn-primary" style="flex: 1;">
+            📋 仅当前班级
+          </button>
+          <button id="btn-export-scope-all" class="btn btn-purple" style="flex: 1;">
+            📚 所有班级数据
+          </button>
+        </div>
+        
+        <h3 style="margin-bottom: 15px; color: #333;">📄 选择导出格式</h3>
+        <div style="display: flex; gap: 10px;">
+          <button id="btn-export-choice-json" class="btn btn-green" style="flex: 1;">
+            导出为 JSON
+          </button>
+          <button id="btn-export-choice-excel" class="btn btn-success" style="flex: 1;">
+            导出为 Excel
+          </button>
+        </div>
+        
+        <div id="export-scope-hint" style="margin-top: 15px; padding: 10px; background: #e3f2fd; border-radius: 8px; font-size: 14px; color: #1976d2;">
+          💡 当前选择：<strong id="export-scope-text">仅当前班级</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="individual-record-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="individual-record-modal-title">学生积分记录</h2>
+        <span class="close-btn">&times;</span>
+      </div>
+
+      <div class="record-table-container">
+        <table class="styled-table" id="individual-record-table">
+          <thead>
+            <tr>
+              <th>时间</th>
+              <th>分值变化</th>
+              <th>原因</th>
+              <th>最终积分</th>
+            </tr>
+          </thead>
+          <tbody id="individual-record-table-body">
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="notification-container"></div>
+
+  <div id="quick-reason-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>管理快捷理由</h2>
+        <span class="close-btn">&times;</span>
+      </div>
+
+      <form id="quick-reason-form">
+        <input type="hidden" id="quick-reason-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="quick-reason-text">理由文本:</label>
+            <input type="text" id="quick-reason-text" required placeholder="例如：积极回答">
+          </div>
+          <div class="form-group">
+            <label for="quick-reason-points">对应分值:</label>
+            <input type="number" id="quick-reason-points" required placeholder="例如: 5 或 -5">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">保存理由</button>
+          <button type="button" class="btn" id="btn-cancel-quick-reason-edit" style="display: none;">取消编辑</button>
+        </div>
+      </form>
+
+      <hr>
+
+      <div class="record-table-container">
+        <table class="styled-table" id="quick-reason-table">
+          <thead>
+            <tr>
+              <th>理由文本</th>
+              <th>分值</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="quick-reason-table-body">
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="achievement-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>管理成就称号</h2>
+        <span class="close-btn">&times;</span>
+      </div>
+
+      <form id="achievement-form">
+        <input type="hidden" id="achievement-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="achievement-name-text">称号名称:</label>
+            <input type="text" id="achievement-name-text" required placeholder="例如：积分王者">
+          </div>
+          <div class="form-group">
+            <label for="achievement-points">所需积分 (累计获得):</label>
+            <input type="number" id="achievement-points" required placeholder="例如: 500" min="1">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">保存称号</button>
+          <button type="button" class="btn" id="btn-cancel-achievement-edit" style="display: none;">取消编辑</button>
+        </div>
+      </form>
+
+      <hr>
+
+      <div class="record-table-container">
+        <table class="styled-table" id="achievement-table">
+          <thead>
+            <tr>
+              <th>顺序</th>
+              <th>称号名称</th>
+              <th>所需积分</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="achievement-table-body">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="clear-data-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>请选择清除选项</h2>
+        <span class="close-btn">&times;</span>
+      </div>
+      <div class="clear-data-choices">
+        <p>请谨慎选择要清除的数据范围：</p>
+
+        <button id="btn-clear-points-only" class="btn btn-warning">
+          <strong>1. 仅清除积分和记录</strong>
+          (保留学生、小组、奖品和成就设置)
+        </button>
+
+        <button id="btn-clear-settings" class="btn btn-danger-secondary">
+          <strong>2. 清除所有设置和积分</strong>
+          (仅保留学生和小组名单)
+        </button>
+
+        <button id="btn-clear-all" class="btn btn-danger">
+          <strong>3. 清除所有数据</strong>
+          (不可撤销，将重置为演示数据)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="class-management-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>班级管理</h2>
+        <span class="close-btn modal-close-btn">&times;</span>
+      </div>
+
+      <form id="form-create-class" style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <input type="text" id="new-class-name" class="form-control" placeholder="输入新班级名称" required
+          style="flex-grow: 1;">
+        <button type="submit" class="btn btn-primary">创建并切换</button>
+      </form>
+
+      <hr>
+
+      <h3>现有班级列表</h3>
+      <ul id="class-list-container" class="list-group">
+        <p id="no-classes-message">正在加载...</p>
+      </ul>
+    </div>
+  </div>
+
+  <div id="about-author-modal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h2>✍️ 关于作者</h2>
+        <span class="close-btn">&times;</span>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <div style="font-size: 60px; margin-bottom: 10px;">👨‍💻</div>
+          <h3 style="margin: 10px 0; color: #4CAF50;">G.L.Wu</h3>
+          <p style="color: #666; font-size: 14px;">教育科技爱好者</p>
+        </div>
+
+        <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+          <h4 style="margin-top: 0; color: #333;">📚 项目信息</h4>
+          <div style="line-height: 1.8;">
+            <p><strong>项目名称：</strong>班级积分管理系统</p>
+            <p><strong>版本：</strong>v2.0.0</p>
+            <p><strong>更新日期：</strong>2026年1月20日</p>
+          </div>
+        </div>
+
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 8px; color: white; margin-bottom: 20px;">
+          <h4 style="margin-top: 0;">🎯 项目特性</h4>
+          <ul style="line-height: 1.8; padding-left: 20px;">
+            <li>✨ 多班级管理，支持多个班级切换</li>
+            <li>🎓 学生和小组积分管理</li>
+            <li>🎁 积分商城和奖励兑换</li>
+            <li>🎡 幸运大转盘抽奖功能</li>
+
+            <li>💾 离线缓存，支持PWA</li>
+            <li>📤 数据导入导出功能</li>
+            
+          </ul>
+        </div>
+
+        <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107;">
+          <h4 style="margin-top: 0; color: #856404;">💡 使用建议</h4>
+          <p style="margin: 0; color: #856404; line-height: 1.6;">
+            建议定期导出数据备份，避免数据丢失。如有任何问题或建议，欢迎反馈！
+          </p>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+          <p style="color: #999; font-size: 12px; margin: 5px 0;">© 2026 G.L.Wu. All rights reserved.</p>
+          <p style="color: #999; font-size: 12px; margin: 5px 0;">Made with ❤️ for Education</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+</body>
+
+</html>
