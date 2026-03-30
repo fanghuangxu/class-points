@@ -74,7 +74,7 @@
   <header>
     <div class="stats-container">
       <div class="stat-item">
-        <div class="icon groups">👨‍👩‍👧‍👦</div>
+        <div class="icon groups">🎓</div>
         <div>
           <div class="label">小组数量</div>
           <div class="value" id="stat-group-count">0</div>
@@ -123,7 +123,8 @@
       <li class="nav-item" data-view="group-management">📚 小组管理</li>
       <li class="nav-item" data-view="student-management">🎓 学生管理</li>
       <li class="nav-item" data-view="rewards-store">💳 积分商城</li>
-      <li class="nav-item" data-view="turntable">☢️ 幸运大转盘</li>
+      <li class="nav-item" data-view="turntable">🎡 幸运大转盘</li>
+      <li class="nav-item" data-view="punishment-turntable">⚡ 惩罚大转盘</li>
       <li class="nav-item" data-view="record-management">🏷️ 积分记录</li>
       <li class="nav-item" data-view="print">🖨️ 打印中心</li>
       <li class="nav-item" id="nav-about-author" style="cursor: pointer;">✍️ 关于作者</li>
@@ -270,6 +271,39 @@
             <thead>
               <tr>
                 <th>奖品名称</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-punishment-turntable">
+      <div class="page-header">
+        <h2>惩罚大转盘</h2>
+      </div>
+      <div class="turntable-main-layout">
+        <div class="turntable-wrapper">
+          <canvas id="punishment-turntable-canvas" width="650" height="650"></canvas>
+          <div class="turntable-pointer"></div>
+          <button class="btn btn-primary btn-spin" id="btn-punishment-spin">开始转动</button>
+        </div>
+        <div class="turntable-controls">
+          <div class="turntable-setting">
+            <label for="punishment-turntable-cost-input">单次惩罚消耗积分:</label>
+            <input type="number" id="punishment-turntable-cost-input" value="5" min="0">
+          </div>
+          <div class="page-header">
+            <h4>惩罚管理</h4>
+            <button class="btn btn-primary btn-sm" id="btn-add-punishment-turntable-prize">＋ 新增惩罚</button>
+          </div>
+          <table class="styled-table" id="punishment-turntable-prize-table">
+            <thead>
+              <tr>
+                <th>惩罚名称</th>
                 <th>操作</th>
               </tr>
             </thead>
