@@ -898,19 +898,23 @@ document.addEventListener('DOMContentLoaded', () => {
             },
 
             // --- 远程同步 Actions ---
-            _buildFetchOptions: (signal) => ({
-                method: 'GET',
-                mode: 'cors',
-                cache: 'no-cache',
-                headers: {
+            _buildFetchOptions: (signal, useProxy = false) => {
+                const headers = {
                     'Accept': 'application/json,text/plain,*/*',
                     'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
                     'Referer': 'https://gitee.com/',
                     'Origin': 'https://gitee.com',
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                },
-                signal: signal
-            }),
+                };
+                if (!useProxy) {
+                    return { method: 'GET', mode: 'cors', cache: 'no-cache', headers, signal };
+                }
+                return { method: 'GET', mode: 'cors', cache: 'no-cache', signal };
+            },
+
+            _getCorsProxyUrl: (targetUrl) => {
+                return `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+            },
 
             // 尝试将 Gitee raw URL 转换为备用格式
             _getFallbackUrls: (url) => {
@@ -925,7 +929,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return urls;
             },
 
-            _fetchWithRetry: async (url, maxRetries = 2, delayMs = 1500) => {
+            _fetchWithRetry: async (url, maxRetries = 2, delayMs = 1500, useProxy = false) => {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 20000);
                 let lastError;
@@ -936,7 +940,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             App.sync.showStatus(`第 ${attempt} 次重试中... (${maxRetries + 1}次最大)`, 'pending');
                             await new Promise(r => setTimeout(r, delayMs * attempt));
                         }
-                        const resp = await fetch(url, App.actions._buildFetchOptions(controller.signal));
+                        const fetchUrl = useProxy && attempt === 0 ? App.actions._getCorsProxyUrl(url) : url;
+                        const resp = await fetch(fetchUrl, App.actions._buildFetchOptions(controller.signal, useProxy));
                         clearTimeout(timeoutId);
                         if (resp.status === 503 || resp.status === 502 || resp.status === 429) {
                             lastError = new Error(`HTTP ${resp.status}（服务器暂时不可用）`);
@@ -946,6 +951,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     } catch (e) {
                         lastError = e;
                         if (e.name === 'AbortError') break;
+                        // 如果是 CORS 错误，尝试使用代理
+                        if (useProxy === false && (e.message.includes('Failed to fetch') || e.message.includes('NetworkError'))) {
+                            lastError = new Error('CORS_ERROR');
+                            break;
+                        }
                     }
                 }
                 clearTimeout(timeoutId);
@@ -1088,6 +1098,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 if (msg.includes('403') || msg.includes('401')) {
                     return '连接失败：无访问权限 (403)。请确认仓库为公开状态。';
+                }
+                if (msg.includes('CORS') || msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+                    return '连接失败：跨域请求被拦截 (CORS)。请稍后重试，或检查网络环境。';
                 }
                 return `连接失败：${msg}`;
             },
@@ -2867,45 +2880,55 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     for (let i = 0; i < candidateUrls.length; i++) {
                         const targetUrl = candidateUrls[i];
-                        try {
-                            const response = await App.actions._fetchWithRetry(targetUrl);
-                            
-                            if (!response.ok) {
-                                if (i < candidateUrls.length - 1) continue;
-                                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                            }
-
-                            let jsonData;
-                            const text = await response.text();
-
-                            if (targetUrl.includes("/api/v5/")) {
-                                const apiData = JSON.parse(text);
-                                if (apiData.content) {
-                                    jsonData = JSON.parse(atob(apiData.content));
-                                } else {
-                                    throw new Error("Gitee API 返回数据为空");
+                        let useProxy = false;
+                        
+                        // 重试策略：先直接请求，失败后用代理
+                        for (let retry = 0; retry <= 1; retry++) {
+                            try {
+                                if (retry === 1) {
+                                    App.sync.showStatus("直接访问失败，尝试通过代理访问...", "pending");
+                                    useProxy = true;
                                 }
-                            } else {
-                                jsonData = JSON.parse(text);
-                            }
+                                const response = await App.actions._fetchWithRetry(targetUrl, 2, 1500, useProxy);
+                                
+                                if (!response.ok) {
+                                    if (i < candidateUrls.length - 1) break;
+                                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                                }
 
-                            const result = App.actions.applyRemoteData(jsonData);
-                            if (result.success) {
-                                btn.classList.remove("syncing");
-                                btn.classList.add("success");
-                                btn.querySelector(".sync-icon").textContent = "✓";
-                                btn.querySelector(".sync-text").textContent = "同步成功";
-                                App.render();
-                                App.ui.showNotification(`同步成功！${result.message}`, "success");
-                                success = true;
-                            } else {
-                                throw new Error(result.message);
+                                let jsonData;
+                                const text = await response.text();
+
+                                if (targetUrl.includes("/api/v5/") && !useProxy) {
+                                    const apiData = JSON.parse(text);
+                                    if (apiData.content) {
+                                        jsonData = JSON.parse(atob(apiData.content));
+                                    } else {
+                                        throw new Error("Gitee API 返回数据为空");
+                                    }
+                                } else {
+                                    jsonData = JSON.parse(text);
+                                }
+
+                                const result = App.actions.applyRemoteData(jsonData);
+                                if (result.success) {
+                                    btn.classList.remove("syncing");
+                                    btn.classList.add("success");
+                                    btn.querySelector(".sync-icon").textContent = "✓";
+                                    btn.querySelector(".sync-text").textContent = "同步成功";
+                                    App.render();
+                                    App.ui.showNotification(`同步成功！${result.message}`, "success");
+                                    success = true;
+                                } else {
+                                    throw new Error(result.message);
+                                }
+                                break;
+                            } catch (err) {
+                                if (useProxy || i < candidateUrls.length - 1) continue;
+                                throw err;
                             }
-                            break;
-                        } catch (err) {
-                            if (i < candidateUrls.length - 1) continue;
-                            throw err;
                         }
+                        if (success) break;
                     }
 
                     if (!success) {
