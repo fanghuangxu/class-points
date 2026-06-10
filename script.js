@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
             punishmentTurntableCost: 5,
             dashboardSortState: { column: 'points', direction: 'desc' },
             groupLeaderboardType: 'avg',
+            leaderboardSortOrder: 'desc', // 排行榜排序方向：'desc'(倒序/高分在前) 或 'asc'(正序/低分在前)
         },
 
         DOMElements: {
@@ -134,6 +135,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
             aboutAuthorModal: document.getElementById('about-author-modal'),
             navAboutAuthor: document.getElementById('nav-about-author'),
+
+            // --- 远程同步元素 ---
+            btnSyncRemote: document.getElementById('btn-sync-remote'),
+            syncRemoteModal: document.getElementById('sync-remote-modal'),
+            syncRepoUrlInput: document.getElementById('sync-repo-url'),
+            syncFilePathInput: document.getElementById('sync-file-path'),
+            syncAutoSaveCheckbox: document.getElementById('sync-auto-save-url'),
+            syncSavedUrlHint: document.getElementById('sync-saved-url-hint'),
+            syncStatusArea: document.getElementById('sync-status-area'),
+            btnDoSync: document.getElementById('btn-do-sync'),
+            btnTestConnection: document.getElementById('btn-test-connection'),
+
+            // --- 排行榜排序方向 ---
+            leaderboardSortOrder: document.querySelector('.leaderboard-sort-order'),
 
         },
 
@@ -348,6 +363,59 @@ document.addEventListener('DOMContentLoaded', () => {
                     App["render.classList"]();
                 }
             }
+        },
+
+        // --- 远程同步工具（Cookie存储 + 状态显示） ---
+        sync: {
+            COOKIE_KEY: 'classPoints_syncUrl',
+
+            getSavedUrl() {
+                try {
+                    return document.cookie.split('; ')
+                        .find(row => row.startsWith(this.COOKIE_KEY + '='))
+                        ?.split('=')[1] || '';
+                } catch { return ''; }
+            },
+
+            saveUrl(url) {
+                try {
+                    const encoded = encodeURIComponent(url);
+                    const expires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toUTCString();
+                    document.cookie = `${this.COOKIE_KEY}=${encoded};expires=${expires};path=/;SameSite=Lax`;
+                } catch (e) {
+                    console.warn('Cookie保存失败:', e);
+                }
+            },
+
+            showStatus(message, type) {
+                const el = App.DOMElements.syncStatusArea;
+                if (!el) return;
+                el.style.display = 'block';
+                el.textContent = message;
+                el.className = ''; // 重置类名
+                switch (type) {
+                    case 'success':
+                        el.style.background = '#d4edda';
+                        el.style.color = '#155724';
+                        el.style.borderLeft = '4px solid #28a745';
+                        break;
+                    case 'error':
+                        el.style.background = '#f8d7da';
+                        el.style.color = '#721c24';
+                        el.style.borderLeft = '4px solid #dc3545';
+                        break;
+                    case 'warning':
+                        el.style.background = '#fff3cd';
+                        el.style.color = '#856404';
+                        el.style.borderLeft = '4px solid #ffc107';
+                        break;
+                    default: // pending
+                        el.style.background = '#cce5ff';
+                        el.style.color = '#004085';
+                        el.style.borderLeft = '4px solid #007bff';
+                        break;
+                }
+            },
         },
 
         // --- 重构：Actions ---
@@ -827,6 +895,167 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 App.saveMetaData(); // 保存新顺序
                 return { success: true };
+            },
+
+            // --- 远程同步 Actions ---
+            syncRemoteData: async () => {
+                const url = App.DOMElements.syncRepoUrlInput.value.trim();
+                if (!url) {
+                    App.sync.showStatus('请输入远程仓库地址', 'error');
+                    return;
+                }
+
+                // 如果需要保存URL到Cookie
+                if (App.DOMElements.syncAutoSaveCheckbox.checked) {
+                    App.sync.saveUrl(url);
+                    App.DOMElements.syncSavedUrlHint.textContent = '地址已记住';
+                    App.DOMElements.syncSavedUrlHint.style.color = 'var(--green)';
+                }
+
+                App.sync.showStatus('正在连接远程服务器...', 'pending');
+                App.DOMElements.btnDoSync.disabled = true;
+                App.DOMElements.btnDoSync.textContent = '同步中...';
+
+                try {
+                    const response = await fetch(url, { cache: 'no-cache' });
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    const jsonData = await response.json();
+
+                    // 解析并应用数据
+                    const result = App.actions.applyRemoteData(jsonData);
+                    if (result.success) {
+                        App.sync.showStatus(`同步成功！${result.message}`, 'success');
+                        App.render();
+                        setTimeout(() => {
+                            App.ui.closeModal(App.DOMElements.syncRemoteModal);
+                            App.ui.showNotification(`远程数据同步成功：${result.message}`, 'success');
+                        }, 1200);
+                    } else {
+                        App.sync.showStatus(`同步失败：${result.message}`, 'error');
+                    }
+                } catch (err) {
+                    console.error('Sync error:', err);
+                    App.sync.showStatus(`同步失败：${err.message}`, 'error');
+                } finally {
+                    App.DOMElements.btnDoSync.disabled = false;
+                    App.DOMElements.btnDoSync.textContent = '开始同步';
+                }
+            },
+
+            testRemoteConnection: async () => {
+                const url = App.DOMElements.syncRepoUrlInput.value.trim();
+                if (!url) {
+                    App.sync.showStatus('请输入远程仓库地址', 'error');
+                    return;
+                }
+
+                App.sync.showStatus('正在测试连接...', 'pending');
+                App.DOMElements.btnTestConnection.disabled = true;
+
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+                    const response = await fetch(url, {
+                        method: 'HEAD',
+                        mode: 'no-cors',
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+
+                    // 由于 no-cors 模式，我们尝试实际获取
+                    const dataResponse = await fetch(url, { signal: controller.signal });
+                    if (dataResponse.ok) {
+                        const contentType = dataResponse.headers.get('content-type') || '';
+                        if (contentType.includes('json') || contentType.includes('text')) {
+                            App.sync.showStatus('连接成功！远程文件可访问，格式正确。', 'success');
+                        } else {
+                            App.sync.showStatus(`连接成功，但文件类型为 ${contentType}，建议使用JSON格式。`, 'warning');
+                        }
+                    } else {
+                        throw new Error(`HTTP ${dataResponse.status}`);
+                    }
+                } catch (err) {
+                    if (err.name === 'AbortError') {
+                        App.sync.showStatus('连接超时（10秒），请检查网络或URL是否正确。', 'error');
+                    } else {
+                        App.sync.showStatus(`连接失败：${err.message}。请检查URL是否正确。`, 'error');
+                    }
+                } finally {
+                    App.DOMElements.btnTestConnection.disabled = false;
+                }
+            },
+
+            applyRemoteData: (jsonData) => {
+                try {
+                    let targetData = null;
+
+                    // 兼容多种JSON格式
+                    if (jsonData.exportType === 'all_classes') {
+                        // 多班级格式 - 导入所有班级
+                        App.classList = jsonData.classList || [];
+                        Object.keys(jsonData.classesData || {}).forEach(classId => {
+                            const classInfo = jsonData.classesData[classId];
+                            const dataKey = App.dataKeyPrefix + classId;
+                            localStorage.setItem(dataKey, JSON.stringify(classInfo.data));
+                        });
+                        App.saveMetaData();
+                        if (App.classList.length > 0) {
+                            App.currentClassId = App.classList[0].id;
+                            App.loadData();
+                        }
+                        return { success: true, message: `已导入${App.classList.length}个班级的数据` };
+                    } else if (jsonData.exportType === 'single_class' || (jsonData.data && (jsonData.data.students || jsonData.data.groups))) {
+                        // 单班级格式
+                        targetData = jsonData.data;
+                        const className = jsonData.className || '远程导入';
+                        // 确保数据完整性
+                        if (targetData.students) {
+                            targetData.students.forEach(s => {
+                                if (s.totalEarnedPoints === undefined) s.totalEarnedPoints = s.points > 0 ? s.points : 0;
+                                if (s.totalDeductions === undefined) s.totalDeductions = 0;
+                            });
+                        }
+                        if (targetData.turntablePrizes) {
+                            targetData.turntablePrizes.forEach(p => { if (p.type === undefined) p.type = 'reward'; });
+                        }
+                        const ds = App.helpers.getDefaultState();
+                        App.state = { ...ds, ...targetData };
+                        App.saveData();
+                        return { success: true, message: `班级"${className}"数据已更新` };
+                    } else if (Array.isArray(jsonData)) {
+                        // 纯数组格式（可能是学生列表）
+                        App.state.students = jsonData.map((s, i) => ({
+                            id: s.id || `remote_${i}`,
+                            name: s.name || s,
+                            group: s.group || '',
+                            points: s.points || 0,
+                            totalEarnedPoints: s.totalEarnedPoints || Math.max(s.points || 0, 0),
+                            totalDeductions: s.totalDeductions || 0
+                        }));
+                        App.saveData();
+                        return { success: true, message: `已导入${jsonData.length}名学生` };
+                    } else if (jsonData.students || jsonData.groups) {
+                        // 直接包含 students/groups 的对象
+                        const ds = App.helpers.getDefaultState();
+                        if (jsonData.students) {
+                            jsonData.students.forEach(s => {
+                                if (s.totalEarnedPoints === undefined) s.totalEarnedPoints = s.points > 0 ? s.points : 0;
+                                if (s.totalDeductions === undefined) s.totalDeductions = 0;
+                            });
+                        }
+                        App.state = { ...ds, ...jsonData };
+                        App.saveData();
+                        return { success: true, message: '数据已成功导入' };
+                    } else {
+                        return { success: false, message: '无法识别的JSON格式' };
+                    }
+                } catch (e) {
+                    console.error('Apply remote data error:', e);
+                    return { success: false, message: `数据解析失败：${e.message}` };
+                }
             },
         },
 
@@ -1560,6 +1789,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 const checkboxes = App.DOMElements.redeemStudentCheckboxContainer.querySelectorAll('input[type="checkbox"]');
                 checkboxes.forEach(cb => cb.checked = false);
             });
+
+            // --- 远程同步事件监听 ---
+            App.DOMElements.btnSyncRemote.addEventListener('click', () => App.handlers.openSyncModal());
+            document.querySelector('#sync-remote-modal .close-btn').addEventListener('click', () => {
+                App.ui.closeModal(App.DOMElements.syncRemoteModal);
+            });
+            App.DOMElements.btnDoSync.addEventListener('click', () => App.actions.syncRemoteData());
+            App.DOMElements.btnTestConnection.addEventListener('click', () => App.actions.testRemoteConnection());
+
+            // --- 排行榜排序方向切换 ---
+            if (App.DOMElements.leaderboardSortOrder) {
+                App.DOMElements.leaderboardSortOrder.addEventListener('click', e => {
+                    const btn = e.target.closest('.sort-order-btn');
+                    if (!btn) return;
+                    App.state.leaderboardSortOrder = btn.dataset.order;
+                    App.render.leaderboard();
+                });
+            }
 
         },
 
@@ -2486,6 +2733,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 App.ui.openModal(document.getElementById('class-management-modal'));
             },
 
+            openSyncModal() {
+                // 从Cookie读取已保存的URL
+                const savedUrl = App.sync.getSavedUrl();
+                if (savedUrl) {
+                    App.DOMElements.syncRepoUrlInput.value = savedUrl;
+                    App.DOMElements.syncSavedUrlHint.textContent = '已记住上次使用的地址';
+                    App.DOMElements.syncSavedUrlHint.style.color = 'var(--green)';
+                } else {
+                    App.DOMElements.syncRepoUrlInput.value = '';
+                    App.DOMElements.syncSavedUrlHint.textContent = '';
+                }
+                // 重置状态区域
+                App.DOMElements.syncStatusArea.style.display = 'none';
+                App.ui.openModal(App.DOMElements.syncRemoteModal);
+            },
+
             handleCreateClass(className) {
                 if (App.classList.some(c => c.name === className)) {
                     App.ui.showNotification('已存在同名班级！', 'error');
@@ -2979,8 +3242,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!listElement) return;
 
             const type = App.state.leaderboardType;
+            const sortOrder = App.state.leaderboardSortOrder || 'desc';
             const titleElement = App.DOMElements.leaderboardTitle;
             App.DOMElements.leaderboardToggle.querySelectorAll('.toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.type === type));
+
+            // 更新排序方向按钮状态
+            if (App.DOMElements.leaderboardSortOrder) {
+                App.DOMElements.leaderboardSortOrder.querySelectorAll('.sort-order-btn').forEach(b => {
+                    b.classList.toggle('active', b.dataset.order === sortOrder);
+                });
+            }
 
             let title = '';
             let sortProperty = '';
@@ -3009,8 +3280,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             titleElement.innerText = title;
 
-            // 根据所选属性对学生列表进行降序排序
-            studentsToList.sort((a, b) => (b[sortProperty] || 0) - (a[sortProperty] || 0));
+            // 根据排序方向进行排序：desc=降序(高分在前), asc=升序(低分在前)
+            studentsToList.sort((a, b) => {
+                const valA = a[sortProperty] || 0;
+                const valB = b[sortProperty] || 0;
+                return sortOrder === 'desc' ? valB - valA : valA - valB;
+            });
 
             listElement.innerHTML = ''; // 清空旧列表
 
