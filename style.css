@@ -105,20 +105,84 @@ nav li.active {
   background: linear-gradient(135deg, #667eea, #764ba2);
   color: #fff;
   border: none;
-  padding: 8px 18px;
-  border-radius: 20px;
-  font-size: 0.85em;
+  padding: 10px 22px;
+  border-radius: 25px;
+  font-size: 0.9em;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
-  font-weight: 500;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+.btn-sync-remote::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s ease;
+}
+.btn-sync-remote:hover::before {
+  left: 100%;
 }
 .btn-sync-remote:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.45);
 }
 .btn-sync-remote:active {
-  transform: translateY(0);
+  transform: translateY(-1px) scale(0.98);
+}
+.btn-sync-remote.syncing {
+  animation: pulse-glow 1.5s ease-in-out infinite;
+  pointer-events: none;
+}
+.btn-sync-remote.success {
+  background: linear-gradient(135deg, #11998e, #38ef7d);
+  animation: success-pop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+.btn-sync-remote.error {
+  background: linear-gradient(135deg, #eb3349, #f45c43);
+  animation: shake 0.5s ease;
+}
+.btn-sync-remote .sync-icon {
+  font-size: 1.2em;
+  transition: transform 0.3s ease;
+}
+.btn-sync-remote.syncing .sync-icon {
+  animation: spin 1s linear infinite;
+}
+.btn-sync-remote:hover .sync-icon {
+  transform: rotate(180deg);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
+  }
+}
+@keyframes success-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
 }
 
 /* --- 排行榜排序方向按钮 --- */

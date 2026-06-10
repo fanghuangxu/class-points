@@ -1889,7 +1889,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // --- 远程同步事件监听 ---
-            App.DOMElements.btnSyncRemote.addEventListener('click', () => App.handlers.openSyncModal());
+            App.DOMElements.btnSyncRemote.addEventListener('click', () => App.handlers.handleDirectSync());
             document.querySelector('#sync-remote-modal .close-btn').addEventListener('click', () => {
                 App.ui.closeModal(App.DOMElements.syncRemoteModal);
             });
@@ -2846,6 +2846,81 @@ document.addEventListener('DOMContentLoaded', () => {
                 App.DOMElements.syncStatusArea.style.display = 'none';
                 App.ui.openModal(App.DOMElements.syncRemoteModal);
             },
+
+            handleDirectSync: async () => {
+                const SYNC_URL = "https://gitee.com/colid/class-point/raw/master/2026-06-09.json";
+                const btn = App.DOMElements.btnSyncRemote;
+                
+                btn.classList.remove("success", "error");
+                btn.classList.add("syncing");
+                btn.querySelector(".sync-text").textContent = "同步中...";
+
+                try {
+                    const candidateUrls = App.actions._getFallbackUrls(SYNC_URL);
+                    let success = false;
+
+                    for (let i = 0; i < candidateUrls.length; i++) {
+                        const targetUrl = candidateUrls[i];
+                        try {
+                            const response = await App.actions._fetchWithRetry(targetUrl);
+                            
+                            if (!response.ok) {
+                                if (i < candidateUrls.length - 1) continue;
+                                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                            }
+
+                            let jsonData;
+                            const text = await response.text();
+
+                            if (targetUrl.includes("/api/v5/")) {
+                                const apiData = JSON.parse(text);
+                                if (apiData.content) {
+                                    jsonData = JSON.parse(atob(apiData.content));
+                                } else {
+                                    throw new Error("Gitee API 返回数据为空");
+                                }
+                            } else {
+                                jsonData = JSON.parse(text);
+                            }
+
+                            const result = App.actions.applyRemoteData(jsonData);
+                            if (result.success) {
+                                btn.classList.remove("syncing");
+                                btn.classList.add("success");
+                                btn.querySelector(".sync-icon").textContent = "✓";
+                                btn.querySelector(".sync-text").textContent = "同步成功";
+                                App.render();
+                                App.ui.showNotification(`同步成功！${result.message}`, "success");
+                                success = true;
+                            } else {
+                                throw new Error(result.message);
+                            }
+                            break;
+                        } catch (err) {
+                            if (i < candidateUrls.length - 1) continue;
+                            throw err;
+                        }
+                    }
+
+                    if (!success) {
+                        throw new Error("所有尝试均失败");
+                    }
+                } catch (err) {
+                    console.error("Sync error:", err);
+                    btn.classList.remove("syncing");
+                    btn.classList.add("error");
+                    btn.querySelector(".sync-icon").textContent = "✗";
+                    btn.querySelector(".sync-text").textContent = "同步失败";
+                    App.ui.showNotification(App._formatSyncError(err), "error");
+                }
+
+                setTimeout(() => {
+                    btn.classList.remove("success", "error");
+                    btn.querySelector(".sync-icon").textContent = "🔄";
+                    btn.querySelector(".sync-text").textContent = "同步远程";
+                }, 2500);
+            },
+
 
             handleCreateClass(className) {
                 if (App.classList.some(c => c.name === className)) {
