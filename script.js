@@ -898,6 +898,54 @@ document.addEventListener('DOMContentLoaded', () => {
             },
 
             // --- 远程同步 Actions ---
+            _buildFetchOptions: (signal) => ({
+                method: 'GET',
+                mode: 'cors',
+                cache: 'no-cache',
+                headers: { 'Accept': 'application/json,*/*' },
+                signal: signal
+            }),
+
+            // 尝试将 Gitee raw URL 转换为备用格式
+            _getFallbackUrls: (url) => {
+                const urls = [url];
+                // raw.giteeusercontent.com -> gitee.com api
+                const giteeRawMatch = url.match(/https?:\/\/raw\.giteeusercontent\.com\/([^\/]+)\/([^\/]+)\/raw\/(.+)/i);
+                if (giteeRawMatch) {
+                    const owner = giteeRawMatch[1], repo = giteeRawMatch[2], path = giteeRawMatch[3];
+                    // 备用1：Gitee API
+                    urls.push(`https://gitee.com/api/v5/repos/${owner}/${repo}/contents/${path}?ref=master`);
+                }
+                return urls;
+            },
+
+            _fetchWithRetry: async (url, maxRetries = 2, delayMs = 1500) => {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 20000);
+                let lastError;
+
+                for (let attempt = 0; attempt <= maxRetries; attempt++) {
+                    try {
+                        if (attempt > 0) {
+                            App.sync.showStatus(`第 ${attempt} 次重试中... (${maxRetries + 1}次最大)`, 'pending');
+                            await new Promise(r => setTimeout(r, delayMs * attempt));
+                        }
+                        const resp = await fetch(url, App.actions._buildFetchOptions(controller.signal));
+                        clearTimeout(timeoutId);
+                        if (resp.status === 503 || resp.status === 502 || resp.status === 429) {
+                            lastError = new Error(`HTTP ${resp.status}（服务器暂时不可用）`);
+                            continue; // 重试
+                        }
+                        return resp;
+                    } catch (e) {
+                        lastError = e;
+                        if (e.name === 'AbortError') break;
+                    }
+                }
+                clearTimeout(timeoutId);
+                throw lastError || new Error('连接失败');
+            },
+
             syncRemoteData: async () => {
                 const url = App.DOMElements.syncRepoUrlInput.value.trim();
                 if (!url) {
@@ -905,7 +953,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                // 如果需要保存URL到Cookie
                 if (App.DOMElements.syncAutoSaveCheckbox.checked) {
                     App.sync.saveUrl(url);
                     App.DOMElements.syncSavedUrlHint.textContent = '地址已记住';
@@ -916,32 +963,58 @@ document.addEventListener('DOMContentLoaded', () => {
                 App.DOMElements.btnDoSync.disabled = true;
                 App.DOMElements.btnDoSync.textContent = '同步中...';
 
-                try {
-                    const response = await fetch(url, { cache: 'no-cache' });
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-                    const jsonData = await response.json();
+                const candidateUrls = App.actions._getFallbackUrls(url);
 
-                    // 解析并应用数据
-                    const result = App.actions.applyRemoteData(jsonData);
-                    if (result.success) {
-                        App.sync.showStatus(`同步成功！${result.message}`, 'success');
-                        App.render();
-                        setTimeout(() => {
-                            App.ui.closeModal(App.DOMElements.syncRemoteModal);
-                            App.ui.showNotification(`远程数据同步成功：${result.message}`, 'success');
-                        }, 1200);
-                    } else {
-                        App.sync.showStatus(`同步失败：${result.message}`, 'error');
+                for (let i = 0; i < candidateUrls.length; i++) {
+                    const targetUrl = candidateUrls[i];
+                    if (i > 0) App.sync.showStatus(`尝试备用地址 (${i + 1}/${candidateUrls.length})...`, 'pending');
+
+                    try {
+                        const response = await App.actions._fetchWithRetry(targetUrl);
+
+                        if (!response.ok) {
+                            if (i < candidateUrls.length - 1) continue; // 试下一个备用URL
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+
+                        let jsonData;
+                        const contentType = response.headers.get('content-type') || '';
+                        const text = await response.text();
+
+                        // Gitee API 返回的是 base64 编码内容
+                        if (targetUrl.includes('/api/v5/')) {
+                            const apiData = JSON.parse(text);
+                            if (apiData.content) {
+                                jsonData = JSON.parse(atob(apiData.content));
+                            } else {
+                                throw new Error('Gitee API 返回数据为空，请检查文件路径是否正确');
+                            }
+                        } else {
+                            jsonData = JSON.parse(text);
+                        }
+
+                        const result = App.actions.applyRemoteData(jsonData);
+                        if (result.success) {
+                            App.sync.showStatus(`同步成功！${result.message}`, 'success');
+                            App.render();
+                            setTimeout(() => {
+                                App.ui.closeModal(App.DOMElements.syncRemoteModal);
+                                App.ui.showNotification(`远程数据同步成功：${result.message}`, 'success');
+                            }, 1200);
+                            return;
+                        } else {
+                            App.sync.showStatus(`同步失败：${result.message}`, 'error');
+                            return;
+                        }
+                    } catch (err) {
+                        console.error(`Sync attempt ${i + 1} error:`, err);
+                        if (i < candidateUrls.length - 1) continue;
+                        App.sync.showStatus(App._formatSyncError(err), 'error');
                     }
-                } catch (err) {
-                    console.error('Sync error:', err);
-                    App.sync.showStatus(`同步失败：${err.message}`, 'error');
-                } finally {
-                    App.DOMElements.btnDoSync.disabled = false;
-                    App.DOMElements.btnDoSync.textContent = '开始同步';
                 }
+
+                App.DOMElements.btnDoSync.disabled = false;
+                App.DOMElements.btnDoSync.textContent = '开始同步';
             },
 
             testRemoteConnection: async () => {
@@ -954,38 +1027,63 @@ document.addEventListener('DOMContentLoaded', () => {
                 App.sync.showStatus('正在测试连接...', 'pending');
                 App.DOMElements.btnTestConnection.disabled = true;
 
-                try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 10000);
+                const candidateUrls = App.actions._getFallbackUrls(url);
 
-                    const response = await fetch(url, {
-                        method: 'HEAD',
-                        mode: 'no-cors',
-                        signal: controller.signal
-                    });
-                    clearTimeout(timeoutId);
+                for (let i = 0; i < candidateUrls.length; i++) {
+                    const targetUrl = candidateUrls[i];
+                    try {
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 12000);
 
-                    // 由于 no-cors 模式，我们尝试实际获取
-                    const dataResponse = await fetch(url, { signal: controller.signal });
-                    if (dataResponse.ok) {
-                        const contentType = dataResponse.headers.get('content-type') || '';
-                        if (contentType.includes('json') || contentType.includes('text')) {
-                            App.sync.showStatus('连接成功！远程文件可访问，格式正确。', 'success');
+                        const response = await fetch(targetUrl, App.actions._buildFetchOptions(controller.signal));
+                        clearTimeout(timeoutId);
+
+                        if (response.ok) {
+                            const contentType = response.headers.get('content-type') || '';
+                            if (contentType.includes('json') || contentType.includes('text') || targetUrl.includes('/api/v5/')) {
+                                App.sync.showStatus('连接成功！远程文件可访问。', 'success');
+                            } else {
+                                App.sync.showStatus(`连接成功，但文件类型为 ${contentType}，建议使用JSON格式。`, 'warning');
+                            }
+                            return;
+                        } else if (response.status === 503 || response.status === 502) {
+                            if (i < candidateUrls.length - 1) {
+                                App.sync.showStatus(`${targetUrl.includes('giteeusercontent') ? 'Gitee Raw 服务暂不可用' : '连接异常'}，正在尝试备用地址...`, 'warning');
+                                continue;
+                            }
+                            throw new Error(`HTTP ${response.status}`);
                         } else {
-                            App.sync.showStatus(`连接成功，但文件类型为 ${contentType}，建议使用JSON格式。`, 'warning');
+                            throw new Error(`HTTP ${response.status}`);
                         }
-                    } else {
-                        throw new Error(`HTTP ${dataResponse.status}`);
+                    } catch (err) {
+                        clearTimeout?.();
+                        if (err.name === 'AbortError') {
+                            App.sync.showStatus('连接超时（12秒），请检查网络或URL是否正确。', 'error');
+                            return;
+                        }
+                        if (i < candidateUrls.length - 1) continue;
+                        App.sync.showStatus(App._formatSyncError(err), 'error');
                     }
-                } catch (err) {
-                    if (err.name === 'AbortError') {
-                        App.sync.showStatus('连接超时（10秒），请检查网络或URL是否正确。', 'error');
-                    } else {
-                        App.sync.showStatus(`连接失败：${err.message}。请检查URL是否正确。`, 'error');
-                    }
-                } finally {
-                    App.DOMElements.btnTestConnection.disabled = false;
                 }
+
+                App.DOMElements.btnTestConnection.disabled = false;
+            },
+
+            _formatSyncError: (err) => {
+                const msg = err.message || String(err);
+                if (msg.includes('503')) {
+                    return '连接失败：远程服务器返回 503（服务不可用）。\n建议：如果是 Gitee，请稍后重试；也可使用 GitHub 或其他托管服务。';
+                }
+                if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('Network request failed')) {
+                    return '连接失败：网络错误或 CORS 跨域限制。\n请确认：1) URL 正确 2) 仓库已公开 3) 文件存在';
+                }
+                if (msg.includes('404')) {
+                    return '连接失败：文件不存在 (404)。请检查文件路径和分支名是否正确。';
+                }
+                if (msg.includes('403') || msg.includes('401')) {
+                    return '连接失败：无访问权限 (403)。请确认仓库为公开状态。';
+                }
+                return `连接失败：${msg}`;
             },
 
             applyRemoteData: (jsonData) => {
