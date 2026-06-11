@@ -185,6 +185,51 @@ nav li.active {
   40%, 80% { transform: translateX(5px); }
 }
 
+/* --- Git终端样式 --- */
+#git-terminal {
+  background: #1e1e1e;
+  color: #e0e0e0;
+}
+#git-terminal .git-line {
+  margin: 2px 0;
+  opacity: 0;
+  animation: fadeIn 0.2s ease forwards;
+}
+#git-terminal .git-cmd { color: #4ec9b0; }
+#git-terminal .git-info { color: #569cd6; }
+#git-terminal .git-ok { color: #4ec9b0; font-weight: bold; }
+#git-terminal .git-warn { color: #dcdcaa; }
+#git-terminal .git-err { color: #f48771; font-weight: bold; }
+#git-terminal .git-file { color: #ce9178; }
+#git-terminal .git-cursor::after {
+  content: '▋';
+  animation: blink 0.8s infinite;
+  color: #e0e0e0;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* --- Git状态区域 --- */
+#git-status-area {
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.git-status-info {
+  background: #e7f3ff;
+  color: #004085;
+  border-left: 4px solid #007bff;
+}
+.git-status-success {
+  background: #d4edda;
+  color: #155724;
+  border-left: 4px solid #28a745;
+}
+.git-status-error {
+  background: #f8d7da;
+  color: #721c24;
+  border-left: 4px solid #dc3545;
+}
+
 /* --- 排行榜排序方向按钮 --- */
 .leaderboard-sort-order {
   display: flex;

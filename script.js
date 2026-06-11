@@ -139,13 +139,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- 远程同步元素 ---
             btnSyncRemote: document.getElementById('btn-sync-remote'),
             syncRemoteModal: document.getElementById('sync-remote-modal'),
-            syncRepoUrlInput: document.getElementById('sync-repo-url'),
-            syncFilePathInput: document.getElementById('sync-file-path'),
-            syncAutoSaveCheckbox: document.getElementById('sync-auto-save-url'),
-            syncSavedUrlHint: document.getElementById('sync-saved-url-hint'),
-            syncStatusArea: document.getElementById('sync-status-area'),
-            btnDoSync: document.getElementById('btn-do-sync'),
-            btnTestConnection: document.getElementById('btn-test-connection'),
+            gitRepoUrlInput: document.getElementById('git-repo-url'),
+            gitSaveUrlCheckbox: document.getElementById('git-save-url'),
+            gitSearchJsonCheckbox: document.getElementById('git-search-json'),
+            gitSavedHint: document.getElementById('git-saved-hint'),
+            gitTerminal: document.getElementById('git-terminal'),
+            gitStatusArea: document.getElementById('git-status-area'),
+            btnDoGitSync: document.getElementById('btn-do-git-sync'),
+            btnGitCheck: document.getElementById('btn-git-check'),
 
             // --- 排行榜排序方向 ---
             leaderboardSortOrder: document.querySelector('.leaderboard-sort-order'),
@@ -1085,6 +1086,293 @@ document.addEventListener('DOMContentLoaded', () => {
                 App.DOMElements.btnTestConnection.disabled = false;
             },
 
+            _parseRepoUrl: (url) => {
+                if (!url) return null;
+                url = url.trim().replace(/\.git$/, '');
+                // Gitee: https://gitee.com/owner/repo or gitee.com/owner/repo
+                let m = url.match(/(?:https?:\/\/)?(?:www\.)?gitee\.com\/([^\/\s]+)\/([^\/\s?#]+)/i);
+                if (m) return { platform: 'gitee', owner: m[1], repo: m[2] };
+                // GitHub
+                m = url.match(/(?:https?:\/\/)?(?:www\.)?github\.com\/([^\/\s]+)\/([^\/\s?#]+)/i);
+                if (m) return { platform: 'github', owner: m[1], repo: m[2] };
+                return null;
+            },
+
+            gitTerminalWrite: (text, type = 'info') => {
+                const terminal = App.DOMElements.gitTerminal;
+                if (!terminal) return;
+                const line = document.createElement('div');
+                line.className = 'git-line git-' + type;
+                line.textContent = text;
+                terminal.appendChild(line);
+                terminal.scrollTop = terminal.scrollHeight;
+            },
+
+            gitTerminalWriteStatus: (message, type = 'info') => {
+                const area = App.DOMElements.gitStatusArea;
+                if (!area) return;
+                area.style.display = 'block';
+                area.className = '';
+                area.textContent = message;
+                if (type === 'success') area.classList.add('git-status-success');
+                else if (type === 'error') area.classList.add('git-status-error');
+                else area.classList.add('git-status-info');
+            },
+
+            gitTerminalReset: () => {
+                const terminal = App.DOMElements.gitTerminal;
+                if (terminal) {
+                    terminal.innerHTML = '';
+                    terminal.style.display = 'block';
+                }
+            },
+
+            fetchGitFile: async (parsed, filePath, useProxy = false) => {
+                let apiUrl;
+                if (parsed.platform === 'gitee') {
+                    apiUrl = `https://gitee.com/api/v5/repos/${parsed.owner}/${parsed.repo}/contents/${filePath}`;
+                } else {
+                    apiUrl = `https://api.github.com/repos/${parsed.owner}/${parsed.repo}/contents/${filePath}`;
+                }
+                const fetchUrl = useProxy ? App.actions._getCorsProxyUrl(apiUrl) : apiUrl;
+                const response = await App.actions._fetchWithRetry(fetchUrl, 1, 1000, false);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const data = await response.json();
+                if (data && data.content) {
+                    return atob(data.content);
+                }
+                throw new Error('文件内容为空');
+            },
+
+            fetchGitFileList: async (parsed, useProxy = false) => {
+                let apiUrl;
+                if (parsed.platform === 'gitee') {
+                    apiUrl = `https://gitee.com/api/v5/repos/${parsed.owner}/${parsed.repo}/git/trees/master?recursive=1`;
+                } else {
+                    apiUrl = `https://api.github.com/repos/${parsed.owner}/${parsed.repo}/git/trees/main?recursive=1`;
+                }
+                const fetchUrl = useProxy ? App.actions._getCorsProxyUrl(apiUrl) : apiUrl;
+                const response = await App.actions._fetchWithRetry(fetchUrl, 1, 1000, false);
+                if (!response.ok) {
+                    if (parsed.platform === 'github') {
+                        // 尝试 master 分支
+                        const altUrl = useProxy
+                            ? App.actions._getCorsProxyUrl(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}/git/trees/master?recursive=1`)
+                            : `https://api.github.com/repos/${parsed.owner}/${parsed.repo}/git/trees/master?recursive=1`;
+                        const altResp = await App.actions._fetchWithRetry(altUrl, 1, 1000, false);
+                        if (altResp.ok) return await altResp.json();
+                    }
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                return await response.json();
+            },
+
+            checkGitRepo: async () => {
+                const url = App.DOMElements.gitRepoUrlInput.value.trim();
+                if (!url) {
+                    App.actions.gitTerminalWriteStatus('请输入仓库地址', 'error');
+                    return;
+                }
+                const parsed = App.actions._parseRepoUrl(url);
+                if (!parsed) {
+                    App.actions.gitTerminalWriteStatus('无法识别仓库地址格式，请检查', 'error');
+                    return;
+                }
+
+                App.actions.gitTerminalReset();
+                App.actions.gitTerminalWrite('$ git remote show origin', 'cmd');
+                await new Promise(r => setTimeout(r, 300));
+                App.actions.gitTerminalWrite(`* 远程仓库: ${parsed.platform}.com/${parsed.owner}/${parsed.repo}`, 'info');
+                App.actions.gitTerminalWrite(`* 平台: ${parsed.platform.toUpperCase()}`, 'info');
+                await new Promise(r => setTimeout(r, 300));
+
+                try {
+                    App.actions.gitTerminalWriteStatus('正在检测仓库...', 'info');
+                    const fileList = await App.actions.fetchGitFileList(parsed, false);
+                    const files = (fileList.tree || []).filter(f => f.type === 'blob');
+                    const jsonFiles = files.filter(f => /\.json$/i.test(f.path));
+
+                    App.actions.gitTerminalWrite(`[OK] 仓库可访问`, 'ok');
+                    App.actions.gitTerminalWrite(`[INFO] 共发现 ${files.length} 个文件，其中 ${jsonFiles.length} 个 JSON 文件`, 'info');
+                    if (jsonFiles.length > 0) {
+                        jsonFiles.slice(0, 15).forEach(f => {
+                            const icon = /new\.json$/i.test(f.path) ? '★' : '  ';
+                            App.actions.gitTerminalWrite(`  ${icon} ${f.path}`, 'file');
+                        });
+                        const hasNewJson = jsonFiles.some(f => /new\.json$/i.test(f.path));
+                        if (hasNewJson) {
+                            App.actions.gitTerminalWriteStatus(`检测成功！仓库中存在 new.json 文件。点击"拉取并同步"开始同步。`, 'success');
+                        } else {
+                            App.actions.gitTerminalWriteStatus(`检测成功！但未找到 new.json 文件，将自动搜索其他 JSON 文件。`, 'info');
+                        }
+                    } else {
+                        App.actions.gitTerminalWriteStatus('检测成功！但仓库中没有 JSON 文件。', 'warning');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    App.actions.gitTerminalWrite(`[ERR] ${err.message}`, 'err');
+                    App.actions.gitTerminalWrite('尝试通过 CORS 代理访问...', 'warn');
+                    try {
+                        const fileList = await App.actions.fetchGitFileList(parsed, true);
+                        const files = (fileList.tree || []).filter(f => f.type === 'blob');
+                        const jsonFiles = files.filter(f => /\.json$/i.test(f.path));
+                        App.actions.gitTerminalWrite(`[OK] 代理访问成功`, 'ok');
+                        App.actions.gitTerminalWrite(`[INFO] 共发现 ${files.length} 个文件，其中 ${jsonFiles.length} 个 JSON 文件`, 'info');
+                        const hasNewJson = jsonFiles.some(f => /new\.json$/i.test(f.path));
+                        if (hasNewJson) {
+                            App.actions.gitTerminalWriteStatus('代理检测成功！存在 new.json 文件，可以同步。', 'success');
+                        } else {
+                            App.actions.gitTerminalWriteStatus('代理检测成功！未找到 new.json，将自动搜索其他 JSON。', 'info');
+                        }
+                    } catch (err2) {
+                        App.actions.gitTerminalWrite(`[ERR] ${err2.message}`, 'err');
+                        App.actions.gitTerminalWriteStatus('检测失败，请确认仓库为公开状态，或检查地址是否正确。', 'error');
+                    }
+                }
+            },
+
+            gitPullAndSync: async () => {
+                const url = App.DOMElements.gitRepoUrlInput.value.trim();
+                const searchJson = App.DOMElements.gitSearchJsonCheckbox.checked;
+                const btn = App.DOMElements.btnDoGitSync;
+
+                if (!url) {
+                    App.actions.gitTerminalWriteStatus('请输入仓库地址', 'error');
+                    return;
+                }
+                const parsed = App.actions._parseRepoUrl(url);
+                if (!parsed) {
+                    App.actions.gitTerminalWriteStatus('无法识别仓库地址格式', 'error');
+                    return;
+                }
+
+                if (App.DOMElements.gitSaveUrlCheckbox.checked) {
+                    App.sync.saveUrl(url);
+                }
+
+                btn.disabled = true;
+                btn.textContent = '拉取中...';
+
+                // --- 模拟 git 命令流程 ---
+                App.actions.gitTerminalReset();
+                App.actions.gitTerminalWriteStatus('开始同步，请稍候...', 'info');
+
+                await new Promise(r => setTimeout(r, 200));
+                App.actions.gitTerminalWrite(`$ git clone ${parsed.platform}.com/${parsed.owner}/${parsed.repo}`, 'cmd');
+                await new Promise(r => setTimeout(r, 400));
+                App.actions.gitTerminalWrite(`Cloning into '${parsed.repo}'...`, 'info');
+                await new Promise(r => setTimeout(r, 300));
+
+                let fileList;
+                let useProxy = false;
+
+                try {
+                    fileList = await App.actions.fetchGitFileList(parsed, false);
+                    App.actions.gitTerminalWrite(`remote: Enumerating objects...`, 'info');
+                    await new Promise(r => setTimeout(r, 150));
+                    App.actions.gitTerminalWrite(`remote: Counting objects: done`, 'info');
+                    App.actions.gitTerminalWrite(`remote: Compressing objects: done`, 'info');
+                    await new Promise(r => setTimeout(r, 200));
+                    App.actions.gitTerminalWrite(`Receiving objects: 100% (${(fileList.tree || []).length})`, 'info');
+                    App.actions.gitTerminalWrite(`[OK] 克隆完成`, 'ok');
+                } catch (err) {
+                    App.actions.gitTerminalWrite(`[WARN] 直接访问失败: ${err.message}`, 'warn');
+                    App.actions.gitTerminalWrite(`$ git clone --proxy ${parsed.platform}.com/${parsed.owner}/${parsed.repo}`, 'cmd');
+                    await new Promise(r => setTimeout(r, 300));
+                    try {
+                        fileList = await App.actions.fetchGitFileList(parsed, true);
+                        useProxy = true;
+                        App.actions.gitTerminalWrite(`[OK] 通过代理克隆成功`, 'ok');
+                    } catch (err2) {
+                        App.actions.gitTerminalWrite(`[ERR] ${err2.message}`, 'err');
+                        App.actions.gitTerminalWriteStatus('无法访问仓库，请确认仓库为公开状态，或检查地址是否正确。', 'error');
+                        btn.disabled = false;
+                        btn.textContent = '🚀 拉取并同步';
+                        return;
+                    }
+                }
+
+                // --- 搜索文件 ---
+                await new Promise(r => setTimeout(r, 200));
+                App.actions.gitTerminalWrite(`$ find . -name "new.json" -o -name "*.json"`, 'cmd');
+                await new Promise(r => setTimeout(r, 300));
+
+                const files = (fileList.tree || []).filter(f => f.type === 'blob');
+                let targetFile = null;
+
+                if (searchJson) {
+                    // 优先匹配 new.json（不区分大小写）
+                    const newJsonFile = files.find(f => /^new\.json$/i.test(f.path.split('/').pop()));
+                    if (newJsonFile) {
+                        targetFile = newJsonFile.path;
+                        App.actions.gitTerminalWrite(`[OK] 找到匹配文件: ${targetFile}`, 'ok');
+                    } else {
+                        // 搜索其他 JSON
+                        const jsonFiles = files.filter(f => /\.json$/i.test(f.path));
+                        if (jsonFiles.length === 0) {
+                            App.actions.gitTerminalWrite('[ERR] 仓库中没有找到任何 JSON 文件', 'err');
+                            App.actions.gitTerminalWriteStatus('同步失败：仓库中没有 JSON 文件', 'error');
+                            btn.disabled = false;
+                            btn.textContent = '🚀 拉取并同步';
+                            return;
+                        }
+                        // 智能选择：优先根目录的 JSON，其次最近更新的
+                        const rootJson = jsonFiles.find(f => !f.path.includes('/'));
+                        targetFile = rootJson ? rootJson.path : jsonFiles[0].path;
+                        App.actions.gitTerminalWrite(`[INFO] 未找到 new.json，自动选择: ${targetFile}`, 'warn');
+                    }
+                } else {
+                    // 用户指定搜索全部 JSON，取第一个合适的
+                    const jsonFiles = files.filter(f => /\.json$/i.test(f.path));
+                    if (jsonFiles.length === 0) {
+                        App.actions.gitTerminalWrite('[ERR] 没有找到 JSON 文件', 'err');
+                        App.actions.gitTerminalWriteStatus('同步失败：仓库中没有 JSON 文件', 'error');
+                        btn.disabled = false;
+                        btn.textContent = '🚀 拉取并同步';
+                        return;
+                    }
+                    targetFile = jsonFiles[0].path;
+                    App.actions.gitTerminalWrite(`[OK] 选择文件: ${targetFile}`, 'ok');
+                }
+
+                // --- 读取并解析文件 ---
+                await new Promise(r => setTimeout(r, 200));
+                App.actions.gitTerminalWrite(`$ cat ${targetFile}`, 'cmd');
+                await new Promise(r => setTimeout(r, 200));
+
+                try {
+                    const content = await App.actions.fetchGitFile(parsed, targetFile, useProxy);
+                    const jsonData = JSON.parse(content);
+                    App.actions.gitTerminalWrite(`[OK] 文件读取成功 (${content.length} bytes)`, 'ok');
+                    await new Promise(r => setTimeout(r, 200));
+
+                    // --- 应用数据 ---
+                    App.actions.gitTerminalWrite(`$ git merge origin/master`, 'cmd');
+                    await new Promise(r => setTimeout(r, 200));
+                    const result = App.actions.applyRemoteData(jsonData);
+                    if (result.success) {
+                        App.actions.gitTerminalWrite(`[OK] ${result.message}`, 'ok');
+                        App.actions.gitTerminalWriteStatus(`同步成功！${result.message}`, 'success');
+                        App.render();
+                        App.ui.showNotification(`同步成功！${result.message}`, 'success');
+                        // 关闭模态框
+                        setTimeout(() => App.ui.closeModal(App.DOMElements.syncRemoteModal), 800);
+                    } else {
+                        App.actions.gitTerminalWrite(`[ERR] ${result.message}`, 'err');
+                        App.actions.gitTerminalWriteStatus(`同步失败：${result.message}`, 'error');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    App.actions.gitTerminalWrite(`[ERR] 文件读取或解析失败: ${err.message}`, 'err');
+                    App.actions.gitTerminalWriteStatus(`同步失败：${err.message}`, 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = '🚀 拉取并同步';
+                }
+            },
+
             _formatSyncError: (err) => {
                 const msg = err.message || String(err);
                 if (msg.includes('503')) {
@@ -1908,12 +2196,12 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // --- 远程同步事件监听 ---
-            App.DOMElements.btnSyncRemote.addEventListener('click', () => App.handlers.handleDirectSync());
+            App.DOMElements.btnSyncRemote.addEventListener('click', () => App.handlers.openGitSyncModal());
             document.querySelector('#sync-remote-modal .close-btn').addEventListener('click', () => {
                 App.ui.closeModal(App.DOMElements.syncRemoteModal);
             });
-            App.DOMElements.btnDoSync.addEventListener('click', () => App.actions.syncRemoteData());
-            App.DOMElements.btnTestConnection.addEventListener('click', () => App.actions.testRemoteConnection());
+            App.DOMElements.btnDoGitSync.addEventListener('click', () => App.actions.gitPullAndSync());
+            App.DOMElements.btnGitCheck.addEventListener('click', () => App.actions.checkGitRepo());
 
             // --- 排行榜排序方向切换 ---
             if (App.DOMElements.leaderboardSortOrder) {
@@ -2850,19 +3138,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 App.ui.openModal(document.getElementById('class-management-modal'));
             },
 
-            openSyncModal() {
-                // 从Cookie读取已保存的URL
+            openGitSyncModal() {
                 const savedUrl = App.sync.getSavedUrl();
                 if (savedUrl) {
-                    App.DOMElements.syncRepoUrlInput.value = savedUrl;
-                    App.DOMElements.syncSavedUrlHint.textContent = '已记住上次使用的地址';
-                    App.DOMElements.syncSavedUrlHint.style.color = 'var(--green)';
+                    App.DOMElements.gitRepoUrlInput.value = savedUrl;
+                    App.DOMElements.gitSavedHint.textContent = '已记住上次使用的仓库地址';
+                    App.DOMElements.gitSavedHint.style.color = 'var(--green)';
                 } else {
-                    App.DOMElements.syncRepoUrlInput.value = '';
-                    App.DOMElements.syncSavedUrlHint.textContent = '';
+                    App.DOMElements.gitRepoUrlInput.value = '';
+                    App.DOMElements.gitSavedHint.textContent = '';
                 }
-                // 重置状态区域
-                App.DOMElements.syncStatusArea.style.display = 'none';
+                App.DOMElements.gitStatusArea.style.display = 'none';
+                App.DOMElements.gitTerminal.style.display = 'none';
                 App.ui.openModal(App.DOMElements.syncRemoteModal);
             },
 

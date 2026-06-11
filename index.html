@@ -955,50 +955,61 @@
   </div>
 
   <div id="sync-remote-modal" class="modal">
-    <div class="modal-content" style="max-width: 550px;">
+    <div class="modal-content" style="max-width: 600px;">
       <div class="modal-header">
         <h2>🔄 同步远程数据</h2>
         <span class="close-btn">&times;</span>
       </div>
       <div class="modal-body" style="padding: 20px;">
-        <div style="margin-bottom: 20px;">
-          <label for="sync-repo-url" style="display: block; font-weight: 500; margin-bottom: 8px;">远程仓库地址 (GitHub/Gitee Raw JSON文件URL)：</label>
-          <input type="url" id="sync-repo-url" placeholder="例如：https://raw.githubusercontent.com/用户名/仓库/main/data.json"
-            style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; box-sizing: border-box;">
-          <div id="sync-saved-url-hint" style="margin-top: 5px; font-size: 12px; color: var(--sub-font-color);"></div>
+
+        <!-- Git仓库路径模式 -->
+        <div id="git-sync-panel">
+          <div style="margin-bottom: 18px;">
+            <label for="git-repo-url" style="display: block; font-weight: 500; margin-bottom: 8px;">
+              📦 Git仓库路径
+            </label>
+            <input type="text" id="git-repo-url" placeholder="例如：https://gitee.com/colid/class-point.git"
+              style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; box-sizing: border-box; font-family: 'Courier New', monospace;">
+            <div id="git-saved-hint" style="margin-top: 5px; font-size: 12px; color: var(--sub-font-color);"></div>
+          </div>
+
+          <div style="margin-bottom: 15px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <label style="font-weight: 500; display: flex; align-items: center; gap: 6px;">
+              <input type="checkbox" id="git-save-url" checked style="cursor: pointer;">
+              记住仓库地址
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; color: var(--sub-font-color); font-size: 13px;">
+              <input type="checkbox" id="git-search-json" checked style="cursor: pointer;">
+              自动搜索 new.json
+            </label>
+          </div>
+
+          <!-- 模拟终端输出区域 -->
+          <div id="git-terminal" style="display: none; background: #1e1e1e; color: #e0e0e0; padding: 15px; border-radius: 8px; font-family: 'Courier New', Consolas, monospace; font-size: 13px; line-height: 1.6; margin-bottom: 15px; max-height: 250px; overflow-y: auto;">
+            <div style="color: #888; margin-bottom: 8px;">$ 等待命令...</div>
+          </div>
+
+          <div id="git-status-area" style="display: none; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 14px;"></div>
+
+          <div class="form-actions" style="display: flex; gap: 10px;">
+            <button type="button" class="btn btn-primary" id="btn-do-git-sync" style="flex: 1;">
+              🚀 拉取并同步
+            </button>
+            <button type="button" class="btn btn-secondary" id="btn-git-check">🔍 检测仓库</button>
+          </div>
+
+          <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border-color);">
+
+          <div style="font-size: 13px; color: var(--sub-font-color); line-height: 1.7;">
+            <p><strong>支持的仓库类型：</strong></p>
+            <ul style="padding-left: 18px; margin: 5px 0;">
+              <li>Gitee: <code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px;">https://gitee.com/用户名/仓库名.git</code></li>
+              <li>GitHub: <code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px;">https://github.com/用户名/仓库名.git</code></li>
+              <li>仓库必须为公开状态</li>
+            </ul>
+          </div>
         </div>
 
-        <div style="margin-bottom: 15px;">
-          <label style="font-weight: 500; display: flex; align-items: center; gap: 6px;">
-            <input type="checkbox" id="sync-auto-save-url" checked style="cursor: pointer;">
-            记住地址（保存到本地Cookie）
-          </label>
-        </div>
-
-        <div style="margin-bottom: 20px;">
-          <label for="sync-file-path" style="display: block; font-weight: 500; margin-bottom: 8px;">文件路径（可选，留空则使用根目录data.json）：</label>
-          <input type="text" id="sync-file-path" placeholder="例如：class_data.json"
-            style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; box-sizing: border-box;">
-        </div>
-
-        <div id="sync-status-area" style="display: none; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 14px;"></div>
-
-        <div class="form-actions" style="display: flex; gap: 10px;">
-          <button type="button" class="btn btn-primary" id="btn-do-sync" style="flex: 1;">开始同步</button>
-          <button type="button" class="btn btn-secondary" id="btn-test-connection">测试连接</button>
-        </div>
-
-        <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border-color);">
-
-        <div style="font-size: 13px; color: var(--sub-font-color); line-height: 1.7;">
-          <p><strong>使用说明：</strong></p>
-          <ul style="padding-left: 18px; margin: 5px 0;">
-            <li>输入远程JSON文件的完整URL（支持 GitHub/Gitee Raw 链接）</li>
-            <li>JSON格式需与系统导出格式兼容</li>
-            <li>同步后将覆盖当前班级的学生、小组等数据</li>
-            <li>勾选"记住地址"后下次打开自动填充</li>
-          </ul>
-        </div>
       </div>
     </div>
   </div>
