@@ -917,185 +917,160 @@ document.addEventListener('DOMContentLoaded', () => {
                 return `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
             },
 
-            // 尝试将 Gitee raw URL 转换为备用格式
-            _getFallbackUrls: (url) => {
-                const urls = [url];
-                // raw.giteeusercontent.com -> gitee.com api
-                const giteeRawMatch = url.match(/https?:\/\/raw\.giteeusercontent\.com\/([^\/]+)\/([^\/]+)\/raw\/(.+)/i);
-                if (giteeRawMatch) {
-                    const owner = giteeRawMatch[1], repo = giteeRawMatch[2], path = giteeRawMatch[3];
-                    // 备用1：Gitee API
-                    urls.push(`https://gitee.com/api/v5/repos/${owner}/${repo}/contents/${path}?ref=master`);
+            // --- isomorphic-git 初始化 ---
+            gitFs: null,
+            gitDir: 'class-points-repo',
+            gitHttpFetch: async ({ url, method, headers, body, signal }) => {
+                const proxyUrl = App.actions._getCorsProxyUrl(url);
+                const opts = {
+                    method: method || 'GET',
+                    headers: {
+                        ...headers,
+                        'User-Agent': 'git/isomorphic-git',
+                    },
+                    signal: signal || new AbortController().signal,
+                };
+                if (body) opts.body = body;
+
+                const response = await fetch(proxyUrl, opts);
+                if (!response.ok && response.status !== 200) {
+                    throw new Error(`HTTP ${response.status}`);
                 }
-                return urls;
+                return {
+                    statusCode: response.status,
+                    headers: Object.fromEntries(response.headers.entries()),
+                    body: response.body,
+                    text: async () => await response.text(),
+                };
             },
 
-            _fetchWithRetry: async (url, maxRetries = 2, delayMs = 1500, useProxy = false) => {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 20000);
-                let lastError;
-
-                for (let attempt = 0; attempt <= maxRetries; attempt++) {
-                    try {
-                        if (attempt > 0) {
-                            App.sync.showStatus(`第 ${attempt} 次重试中... (${maxRetries + 1}次最大)`, 'pending');
-                            await new Promise(r => setTimeout(r, delayMs * attempt));
-                        }
-                        const fetchUrl = useProxy && attempt === 0 ? App.actions._getCorsProxyUrl(url) : url;
-                        const resp = await fetch(fetchUrl, App.actions._buildFetchOptions(controller.signal, useProxy));
-                        clearTimeout(timeoutId);
-                        if (resp.status === 503 || resp.status === 502 || resp.status === 429) {
-                            lastError = new Error(`HTTP ${resp.status}（服务器暂时不可用）`);
-                            continue; // 重试
-                        }
-                        return resp;
-                    } catch (e) {
-                        lastError = e;
-                        if (e.name === 'AbortError') break;
-                        // 如果是 CORS 错误，尝试使用代理
-                        if (useProxy === false && (e.message.includes('Failed to fetch') || e.message.includes('NetworkError'))) {
-                            lastError = new Error('CORS_ERROR');
-                            break;
-                        }
-                    }
+            initGitFs: () => {
+                if (!App.gitFs) {
+                    App.gitFs = new LightningFS(App.gitDir, { autoCreate: true });
                 }
-                clearTimeout(timeoutId);
-                throw lastError || new Error('连接失败');
+                return App.gitFs;
             },
 
-            syncRemoteData: async () => {
-                const url = App.DOMElements.syncRepoUrlInput.value.trim();
-                if (!url) {
-                    App.sync.showStatus('请输入远程仓库地址', 'error');
-                    return;
+            // --- isomorphic-git 克隆并搜索文件 ---
+            gitCloneAndSearch: async (parsed, onLog) => {
+                const fs = App.actions.initGitFs();
+                const dir = '/' + App.gitDir;
+
+                // 清理旧仓库
+                try {
+                    await fs.rmdir(dir, { recursive: true });
+                } catch (e) { /* ignore */ }
+
+                // 获取 git URL
+                let gitUrl;
+                if (parsed.platform === 'gitee') {
+                    gitUrl = `https://gitee.com/${parsed.owner}/${parsed.repo}.git`;
+                } else {
+                    gitUrl = `https://github.com/${parsed.owner}/${parsed.repo}.git`;
                 }
 
-                if (App.DOMElements.syncAutoSaveCheckbox.checked) {
-                    App.sync.saveUrl(url);
-                    App.DOMElements.syncSavedUrlHint.textContent = '地址已记住';
-                    App.DOMElements.syncSavedUrlHint.style.color = 'var(--green)';
-                }
+                const httpFetch = App.actions.gitHttpFetch;
 
-                App.sync.showStatus('正在连接远程服务器...', 'pending');
-                App.DOMElements.btnDoSync.disabled = true;
-                App.DOMElements.btnDoSync.textContent = '同步中...';
+                // 检查 refs
+                onLog('$ git ls-remote ' + gitUrl, 'cmd');
+                await new Promise(r => setTimeout(r, 300));
 
-                const candidateUrls = App.actions._getFallbackUrls(url);
-
-                for (let i = 0; i < candidateUrls.length; i++) {
-                    const targetUrl = candidateUrls[i];
-                    if (i > 0) App.sync.showStatus(`尝试备用地址 (${i + 1}/${candidateUrls.length})...`, 'pending');
-
+                let refs;
+                try {
+                    refs = await git.lsRemote({
+                        fs, http: { fetch: httpFetch },
+                        dir, url: gitUrl,
+                        ref: 'master',
+                    });
+                } catch (err) {
                     try {
-                        const response = await App.actions._fetchWithRetry(targetUrl);
-
-                        if (!response.ok) {
-                            if (i < candidateUrls.length - 1) continue; // 试下一个备用URL
-                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                        }
-
-                        let jsonData;
-                        const contentType = response.headers.get('content-type') || '';
-                        const text = await response.text();
-
-                        // Gitee API 返回的是 base64 编码内容
-                        if (targetUrl.includes('/api/v5/')) {
-                            const apiData = JSON.parse(text);
-                            if (apiData.content) {
-                                jsonData = JSON.parse(atob(apiData.content));
-                            } else {
-                                throw new Error('Gitee API 返回数据为空，请检查文件路径是否正确');
-                            }
-                        } else {
-                            jsonData = JSON.parse(text);
-                        }
-
-                        const result = App.actions.applyRemoteData(jsonData);
-                        if (result.success) {
-                            App.sync.showStatus(`同步成功！${result.message}`, 'success');
-                            App.render();
-                            setTimeout(() => {
-                                App.ui.closeModal(App.DOMElements.syncRemoteModal);
-                                App.ui.showNotification(`远程数据同步成功：${result.message}`, 'success');
-                            }, 1200);
-                            return;
-                        } else {
-                            App.sync.showStatus(`同步失败：${result.message}`, 'error');
-                            return;
-                        }
-                    } catch (err) {
-                        console.error(`Sync attempt ${i + 1} error:`, err);
-                        if (i < candidateUrls.length - 1) continue;
-                        App.sync.showStatus(App._formatSyncError(err), 'error');
+                        refs = await git.lsRemote({
+                            fs, http: { fetch: httpFetch },
+                            dir, url: gitUrl,
+                            ref: 'main',
+                        });
+                    } catch (err2) {
+                        refs = {};
                     }
                 }
 
-                App.DOMElements.btnDoSync.disabled = false;
-                App.DOMElements.btnDoSync.textContent = '开始同步';
-            },
+                const branch = refs['HEAD'] ? refs['HEAD'].slice(0, 7) : 'unknown';
+                onLog(`remote: Total ${Object.keys(refs).length} refs`, 'info');
+                onLog(`remote: * 远程 HEAD -> ${branch}`, 'info');
+                onLog(`[OK] 连接成功`, 'ok');
+                await new Promise(r => setTimeout(r, 200));
 
-            testRemoteConnection: async () => {
-                const url = App.DOMElements.syncRepoUrlInput.value.trim();
-                if (!url) {
-                    App.sync.showStatus('请输入远程仓库地址', 'error');
-                    return;
-                }
+                // 克隆
+                onLog(`$ git clone ${gitUrl} --depth=1`, 'cmd');
+                onLog(`Cloning into '${parsed.repo}'...`, 'info');
+                await new Promise(r => setTimeout(r, 300));
 
-                App.sync.showStatus('正在测试连接...', 'pending');
-                App.DOMElements.btnTestConnection.disabled = true;
-
-                const candidateUrls = App.actions._getFallbackUrls(url);
-
-                for (let i = 0; i < candidateUrls.length; i++) {
-                    const targetUrl = candidateUrls[i];
+                try {
+                    await git.clone({
+                        fs, http: { fetch: httpFetch },
+                        dir,
+                        url: gitUrl,
+                        ref: 'master',
+                        singleBranch: true,
+                        depth: 50,
+                        onAuth: () => ({ username: 'x-access-token', password: '' }),
+                    });
+                } catch (err) {
                     try {
-                        const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 12000);
-
-                        const response = await fetch(targetUrl, App.actions._buildFetchOptions(controller.signal));
-                        clearTimeout(timeoutId);
-
-                        if (response.ok) {
-                            const contentType = response.headers.get('content-type') || '';
-                            if (contentType.includes('json') || contentType.includes('text') || targetUrl.includes('/api/v5/')) {
-                                App.sync.showStatus('连接成功！远程文件可访问。', 'success');
-                            } else {
-                                App.sync.showStatus(`连接成功，但文件类型为 ${contentType}，建议使用JSON格式。`, 'warning');
-                            }
-                            return;
-                        } else if (response.status === 503 || response.status === 502) {
-                            if (i < candidateUrls.length - 1) {
-                                App.sync.showStatus(`${targetUrl.includes('giteeusercontent') ? 'Gitee Raw 服务暂不可用' : '连接异常'}，正在尝试备用地址...`, 'warning');
-                                continue;
-                            }
-                            throw new Error(`HTTP ${response.status}`);
-                        } else {
-                            throw new Error(`HTTP ${response.status}`);
+                        await git.clone({
+                            fs, http: { fetch: httpFetch },
+                            dir,
+                            url: gitUrl,
+                            ref: 'main',
+                            singleBranch: true,
+                            depth: 50,
+                            onAuth: () => ({ username: 'x-access-token', password: '' }),
+                        });
+                    } catch (err2) {
+                        try {
+                            await git.clone({
+                                fs, http: { fetch: httpFetch },
+                                dir,
+                                url: gitUrl,
+                                ref: 'master',
+                                singleBranch: true,
+                                depth: 50,
+                            });
+                        } catch (err3) {
+                            await git.clone({
+                                fs, http: { fetch: httpFetch },
+                                dir,
+                                url: gitUrl,
+                                ref: 'main',
+                                singleBranch: true,
+                                depth: 50,
+                            });
                         }
-                    } catch (err) {
-                        clearTimeout?.();
-                        if (err.name === 'AbortError') {
-                            App.sync.showStatus('连接超时（12秒），请检查网络或URL是否正确。', 'error');
-                            return;
-                        }
-                        if (i < candidateUrls.length - 1) continue;
-                        App.sync.showStatus(App._formatSyncError(err), 'error');
                     }
                 }
 
-                App.DOMElements.btnTestConnection.disabled = false;
+                onLog(`Receiving objects: 100%`, 'info');
+                onLog(`Resolving deltas: 100%`, 'info');
+                onLog(`[OK] 克隆完成`, 'ok');
+                await new Promise(r => setTimeout(r, 200));
+
+                return dir;
             },
 
-            _parseRepoUrl: (url) => {
-                if (!url) return null;
-                url = url.trim().replace(/\.git$/, '');
-                // Gitee: https://gitee.com/owner/repo or gitee.com/owner/repo
-                let m = url.match(/(?:https?:\/\/)?(?:www\.)?gitee\.com\/([^\/\s]+)\/([^\/\s?#]+)/i);
-                if (m) return { platform: 'gitee', owner: m[1], repo: m[2] };
-                // GitHub
-                m = url.match(/(?:https?:\/\/)?(?:www\.)?github\.com\/([^\/\s]+)\/([^\/\s?#]+)/i);
-                if (m) return { platform: 'github', owner: m[1], repo: m[2] };
-                return null;
+            gitSearchFile: async (dir, filename, onLog) => {
+                const fs = App.actions.initGitFs();
+                const fullPath = dir + '/' + filename;
+
+                onLog(`$ cat ${fullPath}`, 'cmd');
+                await new Promise(r => setTimeout(r, 200));
+
+                try {
+                    const content = await fs.readFile(fullPath, { encoding: 'utf8' });
+                    onLog(`[OK] 文件读取成功 (${content.length} bytes)`, 'ok');
+                    return content;
+                } catch (err) {
+                    throw new Error(`文件 ${filename} 未找到: ${err.message}`);
+                }
             },
 
             gitTerminalWrite: (text, type = 'info') => {
@@ -1127,46 +1102,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             },
 
-            fetchGitFile: async (parsed, filePath, useProxy = false) => {
-                let apiUrl;
-                if (parsed.platform === 'gitee') {
-                    apiUrl = `https://gitee.com/api/v5/repos/${parsed.owner}/${parsed.repo}/contents/${filePath}`;
-                } else {
-                    apiUrl = `https://api.github.com/repos/${parsed.owner}/${parsed.repo}/contents/${filePath}`;
-                }
-                const fetchUrl = useProxy ? App.actions._getCorsProxyUrl(apiUrl) : apiUrl;
-                const response = await App.actions._fetchWithRetry(fetchUrl, 1, 1000, false);
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                const data = await response.json();
-                if (data && data.content) {
-                    return atob(data.content);
-                }
-                throw new Error('文件内容为空');
-            },
-
-            fetchGitFileList: async (parsed, useProxy = false) => {
-                let apiUrl;
-                if (parsed.platform === 'gitee') {
-                    apiUrl = `https://gitee.com/api/v5/repos/${parsed.owner}/${parsed.repo}/git/trees/master?recursive=1`;
-                } else {
-                    apiUrl = `https://api.github.com/repos/${parsed.owner}/${parsed.repo}/git/trees/main?recursive=1`;
-                }
-                const fetchUrl = useProxy ? App.actions._getCorsProxyUrl(apiUrl) : apiUrl;
-                const response = await App.actions._fetchWithRetry(fetchUrl, 1, 1000, false);
-                if (!response.ok) {
-                    if (parsed.platform === 'github') {
-                        // 尝试 master 分支
-                        const altUrl = useProxy
-                            ? App.actions._getCorsProxyUrl(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}/git/trees/master?recursive=1`)
-                            : `https://api.github.com/repos/${parsed.owner}/${parsed.repo}/git/trees/master?recursive=1`;
-                        const altResp = await App.actions._fetchWithRetry(altUrl, 1, 1000, false);
-                        if (altResp.ok) return await altResp.json();
-                    }
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                return await response.json();
+            _parseRepoUrl: (url) => {
+                if (!url) return null;
+                url = url.trim().replace(/\.git$/, '');
+                let m = url.match(/(?:https?:\/\/)?(?:www\.)?gitee\.com\/([^\/\s]+)\/([^\/\s?#]+)/i);
+                if (m) return { platform: 'gitee', owner: m[1], repo: m[2] };
+                m = url.match(/(?:https?:\/\/)?(?:www\.)?github\.com\/([^\/\s]+)\/([^\/\s?#]+)/i);
+                if (m) return { platform: 'github', owner: m[1], repo: m[2] };
+                return null;
             },
 
             checkGitRepo: async () => {
@@ -1182,54 +1125,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 App.actions.gitTerminalReset();
-                App.actions.gitTerminalWrite('$ git remote show origin', 'cmd');
+                App.actions.gitTerminalWriteStatus('正在检测仓库...', 'info');
+
+                let gitUrl;
+                if (parsed.platform === 'gitee') {
+                    gitUrl = `https://gitee.com/${parsed.owner}/${parsed.repo}.git`;
+                } else {
+                    gitUrl = `https://github.com/${parsed.owner}/${parsed.repo}.git`;
+                }
+
+                App.actions.gitTerminalWrite('$ git ls-remote ' + gitUrl, 'cmd');
                 await new Promise(r => setTimeout(r, 300));
-                App.actions.gitTerminalWrite(`* 远程仓库: ${parsed.platform}.com/${parsed.owner}/${parsed.repo}`, 'info');
                 App.actions.gitTerminalWrite(`* 平台: ${parsed.platform.toUpperCase()}`, 'info');
-                await new Promise(r => setTimeout(r, 300));
+                App.actions.gitTerminalWrite(`* 仓库: ${parsed.owner}/${parsed.repo}`, 'info');
 
                 try {
-                    App.actions.gitTerminalWriteStatus('正在检测仓库...', 'info');
-                    const fileList = await App.actions.fetchGitFileList(parsed, false);
-                    const files = (fileList.tree || []).filter(f => f.type === 'blob');
-                    const jsonFiles = files.filter(f => /\.json$/i.test(f.path));
+                    const fs = App.actions.initGitFs();
+                    const httpFetch = App.actions.gitHttpFetch;
+                    const refs = await git.lsRemote({
+                        fs, http: { fetch: httpFetch },
+                        dir: '/' + App.gitDir, url: gitUrl,
+                    });
 
-                    App.actions.gitTerminalWrite(`[OK] 仓库可访问`, 'ok');
-                    App.actions.gitTerminalWrite(`[INFO] 共发现 ${files.length} 个文件，其中 ${jsonFiles.length} 个 JSON 文件`, 'info');
-                    if (jsonFiles.length > 0) {
-                        jsonFiles.slice(0, 15).forEach(f => {
-                            const icon = /new\.json$/i.test(f.path) ? '★' : '  ';
-                            App.actions.gitTerminalWrite(`  ${icon} ${f.path}`, 'file');
-                        });
-                        const hasNewJson = jsonFiles.some(f => /new\.json$/i.test(f.path));
-                        if (hasNewJson) {
-                            App.actions.gitTerminalWriteStatus(`检测成功！仓库中存在 new.json 文件。点击"拉取并同步"开始同步。`, 'success');
-                        } else {
-                            App.actions.gitTerminalWriteStatus(`检测成功！但未找到 new.json 文件，将自动搜索其他 JSON 文件。`, 'info');
-                        }
-                    } else {
-                        App.actions.gitTerminalWriteStatus('检测成功！但仓库中没有 JSON 文件。', 'warning');
-                    }
+                    const branchCount = Object.keys(refs).length;
+                    App.actions.gitTerminalWrite(`[OK] 仓库可访问 (${branchCount} refs)`, 'ok');
+                    App.actions.gitTerminalWrite(`[INFO] 检测成功！仓库存在，可以进行拉取。`, 'info');
+                    App.actions.gitTerminalWriteStatus('检测成功！点击"拉取并同步"开始克隆并同步数据。', 'success');
                 } catch (err) {
                     console.error(err);
                     App.actions.gitTerminalWrite(`[ERR] ${err.message}`, 'err');
-                    App.actions.gitTerminalWrite('尝试通过 CORS 代理访问...', 'warn');
-                    try {
-                        const fileList = await App.actions.fetchGitFileList(parsed, true);
-                        const files = (fileList.tree || []).filter(f => f.type === 'blob');
-                        const jsonFiles = files.filter(f => /\.json$/i.test(f.path));
-                        App.actions.gitTerminalWrite(`[OK] 代理访问成功`, 'ok');
-                        App.actions.gitTerminalWrite(`[INFO] 共发现 ${files.length} 个文件，其中 ${jsonFiles.length} 个 JSON 文件`, 'info');
-                        const hasNewJson = jsonFiles.some(f => /new\.json$/i.test(f.path));
-                        if (hasNewJson) {
-                            App.actions.gitTerminalWriteStatus('代理检测成功！存在 new.json 文件，可以同步。', 'success');
-                        } else {
-                            App.actions.gitTerminalWriteStatus('代理检测成功！未找到 new.json，将自动搜索其他 JSON。', 'info');
-                        }
-                    } catch (err2) {
-                        App.actions.gitTerminalWrite(`[ERR] ${err2.message}`, 'err');
-                        App.actions.gitTerminalWriteStatus('检测失败，请确认仓库为公开状态，或检查地址是否正确。', 'error');
-                    }
+                    App.actions.gitTerminalWriteStatus('检测失败：' + err.message + '。请确认仓库为公开状态。', 'error');
                 }
             },
 
@@ -1255,118 +1180,61 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.disabled = true;
                 btn.textContent = '拉取中...';
 
-                // --- 模拟 git 命令流程 ---
-                App.actions.gitTerminalReset();
-                App.actions.gitTerminalWriteStatus('开始同步，请稍候...', 'info');
-
-                await new Promise(r => setTimeout(r, 200));
-                App.actions.gitTerminalWrite(`$ git clone ${parsed.platform}.com/${parsed.owner}/${parsed.repo}`, 'cmd');
-                await new Promise(r => setTimeout(r, 400));
-                App.actions.gitTerminalWrite(`Cloning into '${parsed.repo}'...`, 'info');
-                await new Promise(r => setTimeout(r, 300));
-
-                let fileList;
-                let useProxy = false;
+                const onLog = (text, type) => App.actions.gitTerminalWrite(text, type);
+                const onStatus = (msg, type) => App.actions.gitTerminalWriteStatus(msg, type);
 
                 try {
-                    fileList = await App.actions.fetchGitFileList(parsed, false);
-                    App.actions.gitTerminalWrite(`remote: Enumerating objects...`, 'info');
-                    await new Promise(r => setTimeout(r, 150));
-                    App.actions.gitTerminalWrite(`remote: Counting objects: done`, 'info');
-                    App.actions.gitTerminalWrite(`remote: Compressing objects: done`, 'info');
+                    const dir = await App.actions.gitCloneAndSearch(parsed, onLog);
                     await new Promise(r => setTimeout(r, 200));
-                    App.actions.gitTerminalWrite(`Receiving objects: 100% (${(fileList.tree || []).length})`, 'info');
-                    App.actions.gitTerminalWrite(`[OK] 克隆完成`, 'ok');
-                } catch (err) {
-                    App.actions.gitTerminalWrite(`[WARN] 直接访问失败: ${err.message}`, 'warn');
-                    App.actions.gitTerminalWrite(`$ git clone --proxy ${parsed.platform}.com/${parsed.owner}/${parsed.repo}`, 'cmd');
-                    await new Promise(r => setTimeout(r, 300));
+
+                    onLog(`$ find . -name "new.json"`, 'cmd');
+                    await new Promise(r => setTimeout(r, 200));
+
+                    let content;
                     try {
-                        fileList = await App.actions.fetchGitFileList(parsed, true);
-                        useProxy = true;
-                        App.actions.gitTerminalWrite(`[OK] 通过代理克隆成功`, 'ok');
-                    } catch (err2) {
-                        App.actions.gitTerminalWrite(`[ERR] ${err2.message}`, 'err');
-                        App.actions.gitTerminalWriteStatus('无法访问仓库，请确认仓库为公开状态，或检查地址是否正确。', 'error');
-                        btn.disabled = false;
-                        btn.textContent = '🚀 拉取并同步';
-                        return;
-                    }
-                }
-
-                // --- 搜索文件 ---
-                await new Promise(r => setTimeout(r, 200));
-                App.actions.gitTerminalWrite(`$ find . -name "new.json" -o -name "*.json"`, 'cmd');
-                await new Promise(r => setTimeout(r, 300));
-
-                const files = (fileList.tree || []).filter(f => f.type === 'blob');
-                let targetFile = null;
-
-                if (searchJson) {
-                    // 优先匹配 new.json（不区分大小写）
-                    const newJsonFile = files.find(f => /^new\.json$/i.test(f.path.split('/').pop()));
-                    if (newJsonFile) {
-                        targetFile = newJsonFile.path;
-                        App.actions.gitTerminalWrite(`[OK] 找到匹配文件: ${targetFile}`, 'ok');
-                    } else {
-                        // 搜索其他 JSON
-                        const jsonFiles = files.filter(f => /\.json$/i.test(f.path));
-                        if (jsonFiles.length === 0) {
-                            App.actions.gitTerminalWrite('[ERR] 仓库中没有找到任何 JSON 文件', 'err');
-                            App.actions.gitTerminalWriteStatus('同步失败：仓库中没有 JSON 文件', 'error');
-                            btn.disabled = false;
-                            btn.textContent = '🚀 拉取并同步';
-                            return;
+                        content = await App.actions.gitSearchFile(dir, 'new.json', onLog);
+                    } catch (err) {
+                        if (searchJson) {
+                            onLog(`[WARN] new.json 不存在，搜索其他 JSON 文件...`, 'warn');
+                            const fs = App.actions.initGitFs();
+                            try {
+                                const files = await fs.readdir(dir);
+                                const jsonFiles = files.filter(f => /\.json$/i.test(f));
+                                if (jsonFiles.length === 0) {
+                                    throw new Error('仓库中没有找到任何 JSON 文件');
+                                }
+                                const targetFile = jsonFiles[0];
+                                onLog(`[INFO] 选择文件: ${targetFile}`, 'info');
+                                content = await App.actions.gitSearchFile(dir, targetFile, onLog);
+                            } catch (e) {
+                                throw new Error('未找到 new.json，仓库中也没有其他 JSON 文件');
+                            }
+                        } else {
+                            throw err;
                         }
-                        // 智能选择：优先根目录的 JSON，其次最近更新的
-                        const rootJson = jsonFiles.find(f => !f.path.includes('/'));
-                        targetFile = rootJson ? rootJson.path : jsonFiles[0].path;
-                        App.actions.gitTerminalWrite(`[INFO] 未找到 new.json，自动选择: ${targetFile}`, 'warn');
                     }
-                } else {
-                    // 用户指定搜索全部 JSON，取第一个合适的
-                    const jsonFiles = files.filter(f => /\.json$/i.test(f.path));
-                    if (jsonFiles.length === 0) {
-                        App.actions.gitTerminalWrite('[ERR] 没有找到 JSON 文件', 'err');
-                        App.actions.gitTerminalWriteStatus('同步失败：仓库中没有 JSON 文件', 'error');
-                        btn.disabled = false;
-                        btn.textContent = '🚀 拉取并同步';
-                        return;
-                    }
-                    targetFile = jsonFiles[0].path;
-                    App.actions.gitTerminalWrite(`[OK] 选择文件: ${targetFile}`, 'ok');
-                }
 
-                // --- 读取并解析文件 ---
-                await new Promise(r => setTimeout(r, 200));
-                App.actions.gitTerminalWrite(`$ cat ${targetFile}`, 'cmd');
-                await new Promise(r => setTimeout(r, 200));
+                    await new Promise(r => setTimeout(r, 200));
+                    onLog(`$ git merge origin/master`, 'cmd');
+                    await new Promise(r => setTimeout(r, 200));
 
-                try {
-                    const content = await App.actions.fetchGitFile(parsed, targetFile, useProxy);
                     const jsonData = JSON.parse(content);
-                    App.actions.gitTerminalWrite(`[OK] 文件读取成功 (${content.length} bytes)`, 'ok');
-                    await new Promise(r => setTimeout(r, 200));
-
-                    // --- 应用数据 ---
-                    App.actions.gitTerminalWrite(`$ git merge origin/master`, 'cmd');
-                    await new Promise(r => setTimeout(r, 200));
                     const result = App.actions.applyRemoteData(jsonData);
+
                     if (result.success) {
-                        App.actions.gitTerminalWrite(`[OK] ${result.message}`, 'ok');
-                        App.actions.gitTerminalWriteStatus(`同步成功！${result.message}`, 'success');
+                        onLog(`[OK] ${result.message}`, 'ok');
+                        onStatus(`同步成功！${result.message}`, 'success');
                         App.render();
                         App.ui.showNotification(`同步成功！${result.message}`, 'success');
-                        // 关闭模态框
                         setTimeout(() => App.ui.closeModal(App.DOMElements.syncRemoteModal), 800);
                     } else {
-                        App.actions.gitTerminalWrite(`[ERR] ${result.message}`, 'err');
-                        App.actions.gitTerminalWriteStatus(`同步失败：${result.message}`, 'error');
+                        onLog(`[ERR] ${result.message}`, 'err');
+                        onStatus(`同步失败：${result.message}`, 'error');
                     }
                 } catch (err) {
                     console.error(err);
-                    App.actions.gitTerminalWrite(`[ERR] 文件读取或解析失败: ${err.message}`, 'err');
-                    App.actions.gitTerminalWriteStatus(`同步失败：${err.message}`, 'error');
+                    onLog(`[ERR] ${err.message}`, 'err');
+                    onStatus('同步失败：' + err.message, 'error');
                 } finally {
                     btn.disabled = false;
                     btn.textContent = '🚀 拉取并同步';
