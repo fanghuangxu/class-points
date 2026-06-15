@@ -946,6 +946,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             initGitFs: () => {
                 if (!App.gitFs) {
+                    const LightningFS = window.LightningFS || window.LF;
                     App.gitFs = new LightningFS(App.gitDir, { autoCreate: true });
                 }
                 return App.gitFs;
@@ -975,6 +976,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 onLog('$ git ls-remote ' + gitUrl, 'cmd');
                 await new Promise(r => setTimeout(r, 300));
 
+                const git = window.git;
                 let refs;
                 try {
                     refs = await git.lsRemote({
@@ -1142,6 +1144,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     const fs = App.actions.initGitFs();
                     const httpFetch = App.actions.gitHttpFetch;
+                    const git = window.git;
                     const refs = await git.lsRemote({
                         fs, http: { fetch: httpFetch },
                         dir: '/' + App.gitDir, url: gitUrl,
