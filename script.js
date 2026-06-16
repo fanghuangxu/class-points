@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
             turntablePrizeIdInput: document.getElementById('turntable-prize-id'), turntablePrizeNameInput: document.getElementById('turntable-prize-name'),
             spinSelectModal: document.getElementById('spin-select-modal'), spinSelectForm: document.getElementById('spin-select-form'),
             spinCostDisplay: document.getElementById('spin-cost-display'), spinStudentSelect: document.getElementById('spin-student-select'),
-            punishmentTurntableCanvas: document.getElementById('punishment-turntable-canvas'), punishmentTurntableCostInput: document.getElementById('punishment-turntable-cost-input'),
+            punishmentTurntableCanvas: document.getElementById('punishment-turntable-canvas'),
             punishmentTurntablePrizeTableBody: document.querySelector('#punishment-turntable-prize-table tbody'),
             punishmentSpinSelectModal: document.getElementById('spin-select-modal'), punishmentSpinSelectForm: document.getElementById('spin-select-form'),
             punishmentSpinCostDisplay: document.getElementById('spin-cost-display'), punishmentSpinStudentSelect: document.getElementById('spin-student-select'),
@@ -1495,7 +1495,6 @@ document.addEventListener('DOMContentLoaded', () => {
             App.DOMElements.searchInput.addEventListener('input', e => App.render.dashboard(e.target.value));
             App.DOMElements.dashboardSortControls.addEventListener('click', e => App.handlers.handleDashboardSortClick(e));
             App.DOMElements.turntableCostInput.addEventListener('change', e => { App.state.turntableCost = parseInt(e.target.value) || 0; App.saveData(); });
-            App.DOMElements.punishmentTurntableCostInput.addEventListener('change', e => { App.state.punishmentTurntableCost = parseInt(e.target.value) || 0; App.saveData(); });
             App.DOMElements.studentCardsContainer.addEventListener('click', e => App.handlers.handleCardClick(e));
             App.DOMElements.rewardsContainer.addEventListener('click', e => App.handlers.handleRewardCardClick(e));
             App.DOMElements.studentTableBody.addEventListener('click', e => App.handlers.handleStudentTableClick(e));
@@ -1629,7 +1628,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 else if (v === 'punishment-turntable') {
                     App.render.punishmentTurntablePrizes();
                     App.handlers.initPunishmentTurntable();
-                    App.DOMElements.punishmentTurntableCostInput.value = App.state.punishmentTurntableCost;
                 }
                 // 否则（即用户离开大转盘或访问其他页面），检查并销毁大转盘实例
                 else {
