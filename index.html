@@ -74,7 +74,7 @@
   <header>
     <div class="stats-container">
       <div class="stat-item">
-        <div class="icon groups">🎓</div>
+        <div class="icon groups">👨‍👩‍👧‍👦</div>
         <div>
           <div class="label">小组数量</div>
           <div class="value" id="stat-group-count">0</div>
@@ -103,6 +103,10 @@
       </div>
     </div>
 
+
+    <div class="stats-container">
+    </div>
+
     <div class="class-management-area">
       <span id="current-class-display">当前班级：**请选择**</span>
       <button id="btn-open-class-modal" class="btn btn-primary btn-sm" style="margin-left: 10px;">切换/管理班级</button>
@@ -116,12 +120,12 @@
     <div class="nav-header">积分管理系统</div>
     <ul>
       <li class="nav-item active" data-view="dashboard">📊 班级概览</li>
-      <li class="nav-item" data-view="group-management">📚 小组管理</li>
+      <li class="nav-item" data-view="group-management">👨‍👩‍👧‍👦 小组管理</li>
       <li class="nav-item" data-view="student-management">🎓 学生管理</li>
-      <li class="nav-item" data-view="rewards-store">💳 积分商城</li>
-      <li class="nav-item" data-view="turntable">☢️ 幸运大转盘</li>
-      <li class="nav-item" data-view="punishment-turntable">⚡ 惩罚大转盘</li>
-      <li class="nav-item" data-view="record-management">🏷️ 积分记录</li>
+      <li class="nav-item" data-view="rewards-store">🎁 积分商城</li>
+      <li class="nav-item" data-view="turntable">🎡 幸运大转盘</li>
+      <li class="nav-item" data-view="punishment-turntable">🎯 惩罚大转盘</li>
+      <li class="nav-item" data-view="record-management">📑 积分记录</li>
       <li class="nav-item" data-view="print">🖨️ 打印中心</li>
       <li class="nav-item" id="nav-about-author" style="cursor: pointer;">✍️ 关于作者</li>
     </ul>
@@ -289,7 +293,7 @@
         <div class="turntable-wrapper">
           <canvas id="punishment-turntable-canvas" width="650" height="650"></canvas>
           <div class="turntable-pointer"></div>
-          <button class="btn btn-primary btn-spin" id="btn-punishment-spin">开始转动</button>
+          <button class="btn btn-danger btn-spin" id="btn-punishment-spin">开始转动</button>
         </div>
         <div class="turntable-controls">
           <div class="page-header">
@@ -658,6 +662,40 @@
     </div>
   </div>
 
+  <div id="punishment-turntable-prize-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="punishment-turntable-prize-modal-title">管理惩罚</h2>
+        <span class="close-btn">&times;</span>
+      </div>
+      <form id="punishment-turntable-prize-form">
+        <input type="hidden" id="punishment-turntable-prize-id">
+        <label for="punishment-turntable-prize-name">惩罚名称:</label>
+        <input type="text" id="punishment-turntable-prize-name" required>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">保存惩罚</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="punishment-spin-select-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>选择需要惩罚的学生</h2>
+        <span class="close-btn">&times;</span>
+      </div>
+      <form id="punishment-spin-select-form">
+        <p>仅显示积分小于 0 的学生，本次抽奖不消耗积分。</p>
+        <label for="punishment-spin-student-select">选择学生:</label>
+        <select id="punishment-spin-student-select" required></select>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-danger">确认并开始惩罚</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div id="notification-container"></div>
   <div class="modal" id="confirm-modal">
     <div class="modal-content">
@@ -896,8 +934,9 @@
       </div>
       <div class="modal-body" style="padding: 20px;">
         <div style="text-align: center; margin-bottom: 30px;">
-          <div style="font-size: 60px; margin-bottom: 10px;">⚙️⚙️</div>
-          <h3 style="margin: 10px 0; color: #4CAF50;">COLID & Huangxu - Fang</h3>
+          <div style="font-size: 60px; margin-bottom: 10px;">👨‍💻</div>
+          <h3 style="margin: 10px 0; color: #4CAF50;">G.L.Wu</h3>
+          <p style="color: #666; font-size: 14px;">教育科技爱好者</p>
         </div>
 
         <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
@@ -905,9 +944,7 @@
           <div style="line-height: 1.8;">
             <p><strong>项目名称：</strong>班级积分管理系统</p>
             <p><strong>版本：</strong>v2.0.0</p>
-            <p><strong>更新日期：</strong>2026年3月30日</p>
-            <p>本项目属于 <strong>open every things</strong> 项目</p>
-            <p><strong>本项目基于 G.L.Wu的<a href="https://guilin-wu.github.io/class-points-system-Multiple_classes/">class-points-system-Multipe_classes</a>爆改而来</strong></p>
+            <p><strong>更新日期：</strong>2026年1月20日</p>
           </div>
         </div>
 
@@ -916,29 +953,32 @@
           <ul style="line-height: 1.8; padding-left: 20px;">
             <li>✨ 多班级管理，支持多个班级切换</li>
             <li>🎓 学生和小组积分管理</li>
-            <li>💳 积分商城和奖励兑换</li>
-            <li>☢️ 幸运大转盘和惩罚大转盘抽奖功能</li>
+            <li>🎁 积分商城和奖励兑换</li>
+            <li>🎡 幸运大转盘抽奖功能</li>
 
-            <li>📤 离线缓存，支持PWA</li>
+            <li>💾 离线缓存，支持PWA</li>
             <li>📤 数据导入导出功能</li>
-
+            
           </ul>
         </div>
 
         <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107;">
-          <h4 style="margin-top: 0; color: #856404;">📤 使用建议</h4>
+          <h4 style="margin-top: 0; color: #856404;">💡 使用建议</h4>
           <p style="margin: 0; color: #856404; line-height: 1.6;">
             建议定期导出数据备份，避免数据丢失。如有任何问题或建议，欢迎反馈！
           </p>
         </div>
 
         <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
-          <p style="color: #999; font-size: 12px; margin: 5px 0;">© 2026 COLID. All rights reserved.</p>
-          <p style="color: #999; font-size: 12px; margin: 5px 0;">Made with ❤️ for World</p>
+          <p style="color: #999; font-size: 12px; margin: 5px 0;">© 2026 G.L.Wu. All rights reserved.</p>
+          <p style="color: #999; font-size: 12px; margin: 5px 0;">Made with ❤️ for Education</p>
         </div>
       </div>
     </div>
   </div>
+
+
+
 </body>
 
 </html>

@@ -96,34 +96,6 @@ nav li.active {
 .stat-item .label { font-size: 0.9em; color: var(--sub-font-color); }
 .stat-item .value { font-size: 1.5em; font-weight: bold; }
 
-
-/* --- 排行榜排序方向按钮 --- */
-.leaderboard-sort-order {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  margin-bottom: 15px;
-}
-.sort-order-btn {
-  border: 1px solid var(--border-color);
-  background: transparent;
-  padding: 5px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.82em;
-  font-weight: 500;
-  color: var(--sub-font-color);
-  transition: all 0.2s ease;
-}
-.sort-order-btn:hover {
-  background: #f1f3f5;
-}
-.sort-order-btn.active {
-  background: var(--primary-color);
-  color: #fff;
-  border-color: var(--primary-color);
-}
-
 /* --- 主内容区 --- */
 #main-content > div { display: none; }
 #main-content > div.active { display: block; animation: fadeIn 0.5s ease; }
@@ -545,6 +517,37 @@ form input:focus, form select:focus {
   background-color: var(--card-background);
   color: var(--primary-color);
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* --- 排行榜排序方向按钮 --- */
+.leaderboard-sort-order {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  margin-bottom: 15px;
+}
+
+.sort-order-btn {
+  border: 1px solid var(--border-color);
+  background-color: transparent;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85em;
+  font-weight: 500;
+  color: var(--sub-font-color);
+  transition: all 0.2s ease;
+}
+
+.sort-order-btn:hover {
+  background-color: var(--card-background);
+}
+
+.sort-order-btn.active {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
 }
 
 /* In style.css */

@@ -1,0 +1,1857 @@
+{
+  "exportType": "single_class",
+  "exportDate": "2026-06-16T03:30:08.188Z",
+  "className": "默认班级",
+  "classId": "_98b4nm8fy",
+  "data": {
+    "students": [
+      {
+        "id": "S1",
+        "name": "蔡晨星",
+        "group": "_7otjj8a1i",
+        "points": 0,
+        "totalEarnedPoints": 4,
+        "totalDeductions": 4
+      },
+      {
+        "id": "S22",
+        "name": "陈研娜",
+        "group": "_r83ftl2r1",
+        "points": 1,
+        "totalEarnedPoints": 1,
+        "totalDeductions": 0
+      },
+      {
+        "id": "S2",
+        "name": "陈泽源",
+        "group": "_vq81drt63",
+        "points": 11,
+        "totalEarnedPoints": 11,
+        "totalDeductions": 0
+      },
+      {
+        "id": "S23",
+        "name": "陈芷晴",
+        "group": "_vq81drt63",
+        "points": 2,
+        "totalEarnedPoints": 2,
+        "totalDeductions": 0
+      },
+      {
+        "id": "S24",
+        "name": "陈子心",
+        "group": "_euyulgkhi",
+        "points": 4,
+        "totalEarnedPoints": 4,
+        "totalDeductions": 0
+      },
+      {
+        "id": "S3",
+        "name": "程泽仁",
+        "group": "_euyulgkhi",
+        "points": 9,
+        "totalEarnedPoints": 11,
+        "totalDeductions": 2
+      },
+      {
+        "id": "S25",
+        "name": "戴予晨",
+        "group": "_7otjj8a1i",
+        "points": 4,
+        "totalEarnedPoints": 4,
+        "totalDeductions": 0
+      },
+      {
+        "id": "S4",
+        "name": "方黄旭",
+        "group": "_7otjj8a1i",
+        "points": 21,
+        "totalEarnedPoints": 26,
+        "totalDeductions": 5
+      },
+      {
+        "id": "S26",
+        "name": "傅妤涵",
+        "group": "_dwuom8yah",
+        "points": -3,
+        "totalEarnedPoints": 2,
+        "totalDeductions": 5
+      },
+      {
+        "id": "S5",
+        "name": "黄习羽",
+        "group": "_euyulgkhi",
+        "points": -32,
+        "totalEarnedPoints": 2,
+        "totalDeductions": 34
+      },
+      {
+        "id": "S6",
+        "name": "黄御书",
+        "group": "_diwvg2lsn",
+        "points": 8,
+        "totalEarnedPoints": 8,
+        "totalDeductions": 0
+      },
+      {
+        "id": "S7",
+        "name": "李一楠",
+        "group": "_5yqzgrsv6",
+        "points": 9,
+        "totalEarnedPoints": 9,
+        "totalDeductions": 0
+      },
+      {
+        "id": "S8",
+        "name": "李煜轩",
+        "group": "_j1pbbnjwx",
+        "points": 30,
+        "totalEarnedPoints": 32,
+        "totalDeductions": 2
+      },
+      {
+        "id": "S27",
+        "name": "梁佳宜",
+        "group": "_7otjj8a1i",
+        "points": 3,
+        "totalEarnedPoints": 3,
+        "totalDeductions": 0
+      },
+      {
+        "id": "S28",
+        "name": "梁嘉钰",
+        "group": "_r83ftl2r1",
+        "points": 8,
+        "totalEarnedPoints": 11,
+        "totalDeductions": 3
+      },
+      {
+        "id": "S20",
+        "name": "林煌博",
+        "group": "_vq81drt63",
+        "points": 0,
+        "totalEarnedPoints": 12,
+        "totalDeductions": 12
+      },
+      {
+        "id": "S29",
+        "name": "林佳祺",
+        "group": "_vq81drt63",
+        "points": 11,
+        "totalEarnedPoints": 11,
+        "totalDeductions": 0
+      },
+      {
+        "id": "S9",
+        "name": "林锦弘",
+        "group": "_r83ftl2r1",
+        "points": 41,
+        "totalEarnedPoints": 43,
+        "totalDeductions": 2
+      },
+      {
+        "id": "S30",
+        "name": "林诗琰",
+        "group": "_euyulgkhi",
+        "points": 1,
+        "totalEarnedPoints": 1,
+        "totalDeductions": 0
+      },
+      {
+        "id": "S10",
+        "name": "林义航",
+        "group": "_euyulgkhi",
+        "points": 1,
+        "totalEarnedPoints": 1,
+        "totalDeductions": 0
+      },
+      {
+        "id": "S11",
+        "name": "林宇杰",
+        "group": "_7otjj8a1i",
+        "points": 4,
+        "totalEarnedPoints": 4,
+        "totalDeductions": 0
+      },
+      {
+        "id": "S31",
+        "name": "林雨晨",
+        "group": "_j1pbbnjwx",
+        "points": 3,
+        "totalEarnedPoints": 3,
+        "totalDeductions": 0
+      },
+      {
+        "id": "S19",
+        "name": "林钰焯",
+        "group": "_5yqzgrsv6",
+        "points": 3,
+        "totalEarnedPoints": 3,
+        "totalDeductions": 0
+      },
+      {
+        "id": "S12",
+        "name": "林正焱",
+        "group": "_diwvg2lsn",
+        "points": 1,
+        "totalEarnedPoints": 4,
+        "totalDeductions": 3
+      },
+      {
+        "id": "S13",
+        "name": "林子豪",
+        "group": "_5yqzgrsv6",
+        "points": 12,
+        "totalEarnedPoints": 16,
+        "totalDeductions": 4
+      },
+      {
+        "id": "S32",
+        "name": "吕梓仪",
+        "group": "_r83ftl2r1",
+        "points": 4,
+        "totalEarnedPoints": 4,
+        "totalDeductions": 0
+      },
+      {
+        "id": "S14",
+        "name": "魏俊烨",
+        "group": "_dwuom8yah",
+        "points": -13,
+        "totalEarnedPoints": 10,
+        "totalDeductions": 23
+      },
+      {
+        "id": "S15",
+        "name": "魏文博",
+        "group": "_dwuom8yah",
+        "points": 5,
+        "totalEarnedPoints": 5,
+        "totalDeductions": 0
+      },
+      {
+        "id": "S16",
+        "name": "吴景鹏",
+        "group": "_r83ftl2r1",
+        "points": 1,
+        "totalEarnedPoints": 1,
+        "totalDeductions": 0
+      },
+      {
+        "id": "S17",
+        "name": "吴晓涵",
+        "group": "_j1pbbnjwx",
+        "points": 4,
+        "totalEarnedPoints": 4,
+        "totalDeductions": 0
+      },
+      {
+        "id": "S33",
+        "name": "吴语雯",
+        "group": "_5yqzgrsv6",
+        "points": 2,
+        "totalEarnedPoints": 2,
+        "totalDeductions": 0
+      },
+      {
+        "id": "S18",
+        "name": "许恒睿",
+        "group": "_dwuom8yah",
+        "points": -16,
+        "totalEarnedPoints": 4,
+        "totalDeductions": 20
+      },
+      {
+        "id": "S34",
+        "name": "许子晴",
+        "group": "_j1pbbnjwx",
+        "points": 1,
+        "totalEarnedPoints": 3,
+        "totalDeductions": 2
+      },
+      {
+        "id": "S21",
+        "name": "姚俊昊",
+        "group": "_diwvg2lsn",
+        "points": 11,
+        "totalEarnedPoints": 13,
+        "totalDeductions": 2
+      },
+      {
+        "id": "S35",
+        "name": "詹佳逸",
+        "group": "_j1pbbnjwx",
+        "points": 3,
+        "totalEarnedPoints": 3,
+        "totalDeductions": 0
+      },
+      {
+        "id": "S36",
+        "name": "张玲铱",
+        "group": "_diwvg2lsn",
+        "points": 9,
+        "totalEarnedPoints": 9,
+        "totalDeductions": 0
+      },
+      {
+        "id": "S37",
+        "name": "郑辰心",
+        "group": "_dwuom8yah",
+        "points": 7,
+        "totalEarnedPoints": 7,
+        "totalDeductions": 0
+      },
+      {
+        "id": "S38",
+        "name": "郑羽彤",
+        "group": "_diwvg2lsn",
+        "points": 7,
+        "totalEarnedPoints": 7,
+        "totalDeductions": 0
+      },
+      {
+        "id": "S40",
+        "name": "朱琪涵",
+        "group": "_vq81drt63",
+        "points": 2,
+        "totalEarnedPoints": 2,
+        "totalDeductions": 0
+      },
+      {
+        "id": "S39",
+        "name": "朱语彤",
+        "group": "_5yqzgrsv6",
+        "points": 0,
+        "totalEarnedPoints": 9,
+        "totalDeductions": 9
+      }
+    ],
+    "groups": [
+      {
+        "id": "_r83ftl2r1",
+        "name": "第一小组"
+      },
+      {
+        "id": "_dwuom8yah",
+        "name": "第二小组"
+      },
+      {
+        "id": "_vq81drt63",
+        "name": "第三小组"
+      },
+      {
+        "id": "_euyulgkhi",
+        "name": "第四小组"
+      },
+      {
+        "id": "_j1pbbnjwx",
+        "name": "第五小组"
+      },
+      {
+        "id": "_diwvg2lsn",
+        "name": "第六小组"
+      },
+      {
+        "id": "_5yqzgrsv6",
+        "name": "第七小组"
+      },
+      {
+        "id": "_7otjj8a1i",
+        "name": "第八小组"
+      }
+    ],
+    "rewards": [
+      {
+        "id": "_85nxdlo6l",
+        "name": "免作业一次",
+        "cost": 50
+      },
+      {
+        "id": "_n9eonsna2",
+        "name": "小零食",
+        "cost": 20
+      }
+    ],
+    "records": [
+      {
+        "time": "2026/5/17 19:36:05",
+        "studentId": "S18",
+        "studentName": "许恒睿",
+        "change": -1,
+        "reason": "l",
+        "finalPoints": -1
+      },
+      {
+        "time": "2026/5/17 19:36:34",
+        "studentId": "S14",
+        "studentName": "魏俊烨",
+        "change": -1,
+        "reason": "l",
+        "finalPoints": -1
+      },
+      {
+        "time": "2026/5/17 19:36:44",
+        "studentId": "S20",
+        "studentName": "林煌博",
+        "change": -2,
+        "reason": "a",
+        "finalPoints": -2
+      },
+      {
+        "time": "2026/5/17 19:36:55",
+        "studentId": "S5",
+        "studentName": "黄习羽",
+        "change": -12,
+        "reason": "l",
+        "finalPoints": -12
+      },
+      {
+        "time": "2026/5/17 19:37:16",
+        "studentId": "S21",
+        "studentName": "姚俊昊",
+        "change": -1,
+        "reason": "g",
+        "finalPoints": -1
+      },
+      {
+        "time": "2026/5/17 19:37:28",
+        "studentId": "S4",
+        "studentName": "方黄旭",
+        "change": -3,
+        "reason": "a",
+        "finalPoints": -3
+      },
+      {
+        "time": "2026/5/24 19:33:32",
+        "studentId": "S28",
+        "studentName": "梁嘉钰",
+        "change": "+1",
+        "reason": "a",
+        "finalPoints": 1
+      },
+      {
+        "time": "2026/5/24 19:34:42",
+        "studentId": "S9",
+        "studentName": "林锦弘",
+        "change": "+16",
+        "reason": "a",
+        "finalPoints": 16
+      },
+      {
+        "time": "2026/5/24 19:34:53",
+        "studentId": "S32",
+        "studentName": "吕梓仪",
+        "change": "+1",
+        "reason": "l",
+        "finalPoints": 1
+      },
+      {
+        "time": "2026/5/24 19:35:07",
+        "studentId": "S37",
+        "studentName": "郑辰心",
+        "change": "+2",
+        "reason": "l",
+        "finalPoints": 2
+      },
+      {
+        "time": "2026/5/24 19:35:19",
+        "studentId": "S15",
+        "studentName": "魏文博",
+        "change": "+3",
+        "reason": "l",
+        "finalPoints": 3
+      },
+      {
+        "time": "2026/5/24 19:35:33",
+        "studentId": "S26",
+        "studentName": "傅妤涵",
+        "change": "+1",
+        "reason": "l",
+        "finalPoints": 1
+      },
+      {
+        "time": "2026/5/24 19:35:49",
+        "studentId": "S29",
+        "studentName": "林佳祺",
+        "change": "+2",
+        "reason": "l",
+        "finalPoints": 2
+      },
+      {
+        "time": "2026/5/24 19:36:03",
+        "studentId": "S23",
+        "studentName": "陈芷晴",
+        "change": "+1",
+        "reason": "l",
+        "finalPoints": 1
+      },
+      {
+        "time": "2026/5/24 19:36:21",
+        "studentId": "S2",
+        "studentName": "陈泽源",
+        "change": "+5",
+        "reason": "l",
+        "finalPoints": 5
+      },
+      {
+        "time": "2026/5/24 19:36:34",
+        "studentId": "S40",
+        "studentName": "朱琪涵",
+        "change": "+1",
+        "reason": "l",
+        "finalPoints": 1
+      },
+      {
+        "time": "2026/5/24 19:36:49",
+        "studentId": "S24",
+        "studentName": "陈子心",
+        "change": "+2",
+        "reason": "l",
+        "finalPoints": 2
+      },
+      {
+        "time": "2026/5/24 19:37:07",
+        "studentId": "S5",
+        "studentName": "黄习羽",
+        "change": "+1",
+        "reason": "l",
+        "finalPoints": -11
+      },
+      {
+        "time": "2026/5/24 19:37:26",
+        "studentId": "S31",
+        "studentName": "林雨晨",
+        "change": "+1",
+        "reason": "l",
+        "finalPoints": 1
+      },
+      {
+        "time": "2026/5/24 19:37:39",
+        "studentId": "S8",
+        "studentName": "李煜轩",
+        "change": "+14",
+        "reason": "l",
+        "finalPoints": 14
+      },
+      {
+        "time": "2026/5/24 19:37:53",
+        "studentId": "S35",
+        "studentName": "詹佳逸",
+        "change": "+1",
+        "reason": "l",
+        "finalPoints": 1
+      },
+      {
+        "time": "2026/5/24 19:38:14",
+        "studentId": "S17",
+        "studentName": "吴晓涵",
+        "change": "+2",
+        "reason": "l",
+        "finalPoints": 2
+      },
+      {
+        "time": "2026/5/24 19:38:24",
+        "studentId": "S34",
+        "studentName": "许子晴",
+        "change": "+2",
+        "reason": "l",
+        "finalPoints": 2
+      },
+      {
+        "time": "2026/5/24 19:38:35",
+        "studentId": "S38",
+        "studentName": "郑羽彤",
+        "change": "+5",
+        "reason": "；",
+        "finalPoints": 5
+      },
+      {
+        "time": "2026/5/24 19:38:47",
+        "studentId": "S6",
+        "studentName": "黄御书",
+        "change": "+6",
+        "reason": "l",
+        "finalPoints": 6
+      },
+      {
+        "time": "2026/5/24 19:38:57",
+        "studentId": "S12",
+        "studentName": "林正焱",
+        "change": "+1",
+        "reason": "l",
+        "finalPoints": 1
+      },
+      {
+        "time": "2026/5/24 19:39:13",
+        "studentId": "S21",
+        "studentName": "姚俊昊",
+        "change": "+1",
+        "reason": "l",
+        "finalPoints": 0
+      },
+      {
+        "time": "2026/5/24 19:39:23",
+        "studentId": "S33",
+        "studentName": "吴语雯",
+        "change": "+1",
+        "reason": "l",
+        "finalPoints": 1
+      },
+      {
+        "time": "2026/5/24 19:39:33",
+        "studentId": "S7",
+        "studentName": "李一楠",
+        "change": "+8",
+        "reason": "l",
+        "finalPoints": 8
+      },
+      {
+        "time": "2026/5/24 19:39:44",
+        "studentId": "S19",
+        "studentName": "林钰焯",
+        "change": "+1",
+        "reason": "l",
+        "finalPoints": 1
+      },
+      {
+        "time": "2026/5/24 19:40:00",
+        "studentId": "S13",
+        "studentName": "林子豪",
+        "change": "+5",
+        "reason": "l",
+        "finalPoints": 5
+      },
+      {
+        "time": "2026/5/24 19:40:13",
+        "studentId": "S1",
+        "studentName": "蔡晨星",
+        "change": "+3",
+        "reason": "l",
+        "finalPoints": 3
+      },
+      {
+        "time": "2026/5/24 19:40:23",
+        "studentId": "S25",
+        "studentName": "戴予晨",
+        "change": "+1",
+        "reason": "l",
+        "finalPoints": 1
+      },
+      {
+        "time": "2026/5/24 19:40:38",
+        "studentId": "S11",
+        "studentName": "林宇杰",
+        "change": "+1",
+        "reason": "l",
+        "finalPoints": 1
+      },
+      {
+        "time": "2026/5/24 19:40:51",
+        "studentId": "S4",
+        "studentName": "方黄旭",
+        "change": "+13",
+        "reason": "l",
+        "finalPoints": 10
+      },
+      {
+        "time": "2026/5/24 20:46:38",
+        "studentId": "S20",
+        "studentName": "林煌博",
+        "change": -2,
+        "reason": "l",
+        "finalPoints": -4
+      },
+      {
+        "time": "2026/5/24 20:46:53",
+        "studentId": "S39",
+        "studentName": "朱语彤",
+        "change": -2,
+        "reason": "；",
+        "finalPoints": -2
+      },
+      {
+        "time": "2026/5/24 20:47:16",
+        "studentId": "S5",
+        "studentName": "黄习羽",
+        "change": -5,
+        "reason": "；",
+        "finalPoints": -16
+      },
+      {
+        "time": "2026/5/24 20:47:24",
+        "studentId": "S20",
+        "studentName": "林煌博",
+        "change": -3,
+        "reason": "l",
+        "finalPoints": -7
+      },
+      {
+        "time": "2026/5/24 20:47:33",
+        "studentId": "S39",
+        "studentName": "朱语彤",
+        "change": -3,
+        "reason": "；",
+        "finalPoints": -5
+      },
+      {
+        "time": "2026/5/24 20:47:41",
+        "studentId": "S26",
+        "studentName": "傅妤涵",
+        "change": -5,
+        "reason": "；",
+        "finalPoints": -4
+      },
+      {
+        "time": "2026/5/24 20:47:50",
+        "studentId": "S18",
+        "studentName": "许恒睿",
+        "change": -5,
+        "reason": "；",
+        "finalPoints": -6
+      },
+      {
+        "time": "2026/5/24 20:48:03",
+        "studentId": "S12",
+        "studentName": "林正焱",
+        "change": -2,
+        "reason": "；",
+        "finalPoints": -1
+      },
+      {
+        "time": "2026/5/31 17:42:28",
+        "studentId": "S28",
+        "studentName": "梁嘉钰",
+        "change": "+9",
+        "reason": "‘",
+        "finalPoints": 10
+      },
+      {
+        "time": "2026/5/31 17:42:42",
+        "studentId": "S9",
+        "studentName": "林锦弘",
+        "change": "+20",
+        "reason": "o",
+        "finalPoints": 36
+      },
+      {
+        "time": "2026/5/31 17:42:57",
+        "studentId": "S32",
+        "studentName": "吕梓仪",
+        "change": "+1",
+        "reason": "kk",
+        "finalPoints": 2
+      },
+      {
+        "time": "2026/5/31 17:43:10",
+        "studentId": "S37",
+        "studentName": "郑辰心",
+        "change": "+2",
+        "reason": "‘",
+        "finalPoints": 4
+      },
+      {
+        "time": "2026/5/31 17:43:27",
+        "studentId": "S15",
+        "studentName": "魏文博",
+        "change": "+1",
+        "reason": "‘",
+        "finalPoints": 4
+      },
+      {
+        "time": "2026/5/31 17:43:38",
+        "studentId": "S18",
+        "studentName": "许恒睿",
+        "change": "+3",
+        "reason": "‘",
+        "finalPoints": -3
+      },
+      {
+        "time": "2026/5/31 17:44:19",
+        "studentId": "S14",
+        "studentName": "魏俊烨",
+        "change": "+8",
+        "reason": "‘",
+        "finalPoints": 7
+      },
+      {
+        "time": "2026/5/31 17:44:29",
+        "studentId": "S29",
+        "studentName": "林佳祺",
+        "change": "+8",
+        "reason": "‘",
+        "finalPoints": 10
+      },
+      {
+        "time": "2026/5/31 17:44:46",
+        "studentId": "S2",
+        "studentName": "陈泽源",
+        "change": "+3",
+        "reason": "‘",
+        "finalPoints": 8
+      },
+      {
+        "time": "2026/5/31 17:45:03",
+        "studentId": "S20",
+        "studentName": "林煌博",
+        "change": "+8",
+        "reason": "‘",
+        "finalPoints": 1
+      },
+      {
+        "time": "2026/5/31 17:45:13",
+        "studentId": "S24",
+        "studentName": "陈子心",
+        "change": "+1",
+        "reason": "‘",
+        "finalPoints": 3
+      },
+      {
+        "time": "2026/5/31 17:45:44",
+        "studentId": "S3",
+        "studentName": "程泽仁",
+        "change": "+10",
+        "reason": "；",
+        "finalPoints": 10
+      },
+      {
+        "time": "2026/5/31 17:45:58",
+        "studentId": "S31",
+        "studentName": "林雨晨",
+        "change": "+1",
+        "reason": "‘",
+        "finalPoints": 2
+      },
+      {
+        "time": "2026/5/31 17:46:12",
+        "studentId": "S8",
+        "studentName": "李煜轩",
+        "change": "+14",
+        "reason": "‘",
+        "finalPoints": 28
+      },
+      {
+        "time": "2026/5/31 17:46:23",
+        "studentId": "S17",
+        "studentName": "吴晓涵",
+        "change": "+1",
+        "reason": "‘",
+        "finalPoints": 3
+      },
+      {
+        "time": "2026/5/31 17:47:07",
+        "studentId": "S38",
+        "studentName": "郑羽彤",
+        "change": "+1",
+        "reason": "‘",
+        "finalPoints": 6
+      },
+      {
+        "time": "2026/5/31 17:47:19",
+        "studentId": "S6",
+        "studentName": "黄御书",
+        "change": "+1",
+        "reason": "a",
+        "finalPoints": 7
+      },
+      {
+        "time": "2026/5/31 17:47:50",
+        "studentId": "S12",
+        "studentName": "林正焱",
+        "change": "+2",
+        "reason": "‘",
+        "finalPoints": 1
+      },
+      {
+        "time": "2026/5/31 17:48:06",
+        "studentId": "S36",
+        "studentName": "张玲铱",
+        "change": "+8",
+        "reason": "‘",
+        "finalPoints": 8
+      },
+      {
+        "time": "2026/5/31 17:48:28",
+        "studentId": "S21",
+        "studentName": "姚俊昊",
+        "change": "+9",
+        "reason": "l",
+        "finalPoints": 9
+      },
+      {
+        "time": "2026/5/31 17:48:56",
+        "studentId": "S39",
+        "studentName": "朱语彤",
+        "change": "+8",
+        "reason": "‘",
+        "finalPoints": 3
+      },
+      {
+        "time": "2026/5/31 17:49:30",
+        "studentId": "S19",
+        "studentName": "林钰焯",
+        "change": "+1",
+        "reason": "‘",
+        "finalPoints": 2
+      },
+      {
+        "time": "2026/5/31 17:49:53",
+        "studentId": "S13",
+        "studentName": "林子豪",
+        "change": "+10",
+        "reason": "l",
+        "finalPoints": 15
+      },
+      {
+        "time": "2026/5/31 17:50:11",
+        "studentId": "S27",
+        "studentName": "梁佳宜",
+        "change": "+1",
+        "reason": "‘",
+        "finalPoints": 1
+      },
+      {
+        "time": "2026/5/31 17:50:21",
+        "studentId": "S25",
+        "studentName": "戴予晨",
+        "change": "+1",
+        "reason": "；",
+        "finalPoints": 2
+      },
+      {
+        "time": "2026/5/31 17:50:44",
+        "studentId": "S11",
+        "studentName": "林宇杰",
+        "change": "+1",
+        "reason": "‘",
+        "finalPoints": 2
+      },
+      {
+        "time": "2026/5/31 17:51:06",
+        "studentId": "S4",
+        "studentName": "方黄旭",
+        "change": "+11",
+        "reason": "h",
+        "finalPoints": 21
+      },
+      {
+        "time": "2026/5/31 17:51:20",
+        "studentId": "S18",
+        "studentName": "许恒睿",
+        "change": -2,
+        "reason": "‘",
+        "finalPoints": -5
+      },
+      {
+        "time": "2026/5/31 17:51:38",
+        "studentId": "S20",
+        "studentName": "林煌博",
+        "change": "+3",
+        "reason": "帮助同学",
+        "finalPoints": 4
+      },
+      {
+        "time": "2026/5/31 17:51:54",
+        "studentId": "S34",
+        "studentName": "许子晴",
+        "change": -1,
+        "reason": "‘",
+        "finalPoints": 1
+      },
+      {
+        "time": "2026/5/31 17:52:11",
+        "studentId": "S1",
+        "studentName": "蔡晨星",
+        "change": -4,
+        "reason": "；",
+        "finalPoints": -1
+      },
+      {
+        "time": "2026/5/31 17:53:34",
+        "studentId": "S13",
+        "studentName": "林子豪",
+        "change": -2,
+        "reason": "‘",
+        "finalPoints": 13
+      },
+      {
+        "time": "2026/5/31 17:53:49",
+        "studentId": "S4",
+        "studentName": "方黄旭",
+        "change": -2,
+        "reason": "‘",
+        "finalPoints": 19
+      },
+      {
+        "time": "2026/5/31 17:54:00",
+        "studentId": "S3",
+        "studentName": "程泽仁",
+        "change": -2,
+        "reason": "‘",
+        "finalPoints": 8
+      },
+      {
+        "time": "2026/5/31 17:54:10",
+        "studentId": "S9",
+        "studentName": "林锦弘",
+        "change": -2,
+        "reason": "‘",
+        "finalPoints": 34
+      },
+      {
+        "time": "2026/5/31 17:54:19",
+        "studentId": "S39",
+        "studentName": "朱语彤",
+        "change": -2,
+        "reason": "‘",
+        "finalPoints": 1
+      },
+      {
+        "time": "2026/5/31 17:54:31",
+        "studentId": "S18",
+        "studentName": "许恒睿",
+        "change": -2,
+        "reason": "‘",
+        "finalPoints": -7
+      },
+      {
+        "time": "2026/5/31 17:54:54",
+        "studentId": "S20",
+        "studentName": "林煌博",
+        "change": -2,
+        "reason": "‘",
+        "finalPoints": 2
+      },
+      {
+        "time": "2026/5/31 17:55:03",
+        "studentId": "S5",
+        "studentName": "黄习羽",
+        "change": -2,
+        "reason": "‘",
+        "finalPoints": -18
+      },
+      {
+        "time": "2026/5/31 17:56:04",
+        "studentId": "S28",
+        "studentName": "梁嘉钰",
+        "change": -2,
+        "reason": "；",
+        "finalPoints": 8
+      },
+      {
+        "time": "2026/5/31 17:56:18",
+        "studentId": "S8",
+        "studentName": "李煜轩",
+        "change": -2,
+        "reason": "‘",
+        "finalPoints": 26
+      },
+      {
+        "time": "2026/6/8 17:49:32",
+        "studentId": "S28",
+        "studentName": "梁嘉钰",
+        "change": 0,
+        "reason": "惩罚大转盘",
+        "finalPoints": 8
+      },
+      {
+        "time": "2026/6/8 17:51:05",
+        "studentId": "S28",
+        "studentName": "梁嘉钰",
+        "change": 0,
+        "reason": "惩罚大转盘",
+        "finalPoints": 8
+      },
+      {
+        "time": "2026/6/8 17:51:54",
+        "studentId": "S28",
+        "studentName": "梁嘉钰",
+        "change": 0,
+        "reason": "惩罚大转盘",
+        "finalPoints": 8
+      },
+      {
+        "time": "2026/6/8 17:52:07",
+        "studentId": "S28",
+        "studentName": "梁嘉钰",
+        "change": 0,
+        "reason": "惩罚大转盘",
+        "finalPoints": 8
+      },
+      {
+        "time": "2026/6/8 17:52:19",
+        "studentId": "S28",
+        "studentName": "梁嘉钰",
+        "change": 0,
+        "reason": "惩罚大转盘",
+        "finalPoints": 8
+      },
+      {
+        "time": "2026/6/8 17:55:30",
+        "studentId": "S4",
+        "studentName": "方黄旭",
+        "change": 0,
+        "reason": "惩罚大转盘",
+        "finalPoints": 19
+      },
+      {
+        "time": "2026/6/8 17:55:51",
+        "studentId": "S35",
+        "studentName": "詹佳逸",
+        "change": 0,
+        "reason": "惩罚大转盘",
+        "finalPoints": 1
+      },
+      {
+        "time": "2026/6/8 17:56:17",
+        "studentId": "S35",
+        "studentName": "詹佳逸",
+        "change": 0,
+        "reason": "惩罚大转盘",
+        "finalPoints": 1
+      },
+      {
+        "time": "2026/6/8 19:32:32",
+        "studentId": "S4",
+        "studentName": "方黄旭",
+        "change": "+1",
+        "reason": "；",
+        "finalPoints": 20
+      },
+      {
+        "time": "2026/6/8 19:32:46",
+        "studentId": "S13",
+        "studentName": "林子豪",
+        "change": -1,
+        "reason": "；",
+        "finalPoints": 12
+      },
+      {
+        "time": "2026/6/8 19:33:06",
+        "studentId": "S5",
+        "studentName": "黄习羽",
+        "change": -9,
+        "reason": "；",
+        "finalPoints": -27
+      },
+      {
+        "time": "2026/6/8 19:33:20",
+        "studentId": "S8",
+        "studentName": "李煜轩",
+        "change": "+3",
+        "reason": "；",
+        "finalPoints": 29
+      },
+      {
+        "time": "2026/6/8 19:33:31",
+        "studentId": "S32",
+        "studentName": "吕梓仪",
+        "change": "+1",
+        "reason": "；",
+        "finalPoints": 3
+      },
+      {
+        "time": "2026/6/8 19:33:43",
+        "studentId": "S25",
+        "studentName": "戴予晨",
+        "change": "+1",
+        "reason": "；",
+        "finalPoints": 3
+      },
+      {
+        "time": "2026/6/8 19:33:55",
+        "studentId": "S35",
+        "studentName": "詹佳逸",
+        "change": "+1",
+        "reason": "；",
+        "finalPoints": 2
+      },
+      {
+        "time": "2026/6/8 19:34:12",
+        "studentId": "S27",
+        "studentName": "梁佳宜",
+        "change": "+1",
+        "reason": "；",
+        "finalPoints": 2
+      },
+      {
+        "time": "2026/6/8 19:34:24",
+        "studentId": "S37",
+        "studentName": "郑辰心",
+        "change": "+2",
+        "reason": "；",
+        "finalPoints": 6
+      },
+      {
+        "time": "2026/6/8 19:34:36",
+        "studentId": "S11",
+        "studentName": "林宇杰",
+        "change": "+1",
+        "reason": "；",
+        "finalPoints": 3
+      },
+      {
+        "time": "2026/6/8 19:35:29",
+        "studentId": "S9",
+        "studentName": "林锦弘",
+        "change": "+3",
+        "reason": "；",
+        "finalPoints": 37
+      },
+      {
+        "time": "2026/6/8 19:35:48",
+        "studentId": "S2",
+        "studentName": "陈泽源",
+        "change": "+2",
+        "reason": "；",
+        "finalPoints": 10
+      },
+      {
+        "time": "2026/6/8 19:36:06",
+        "studentId": "S34",
+        "studentName": "许子晴",
+        "change": -1,
+        "reason": "；",
+        "finalPoints": 0
+      },
+      {
+        "time": "2026/6/8 19:36:20",
+        "studentId": "S14",
+        "studentName": "魏俊烨",
+        "change": -8,
+        "reason": "；",
+        "finalPoints": -1
+      },
+      {
+        "time": "2026/6/8 19:36:48",
+        "studentId": "S21",
+        "studentName": "姚俊昊",
+        "change": -1,
+        "reason": "；",
+        "finalPoints": 8
+      },
+      {
+        "time": "2026/6/8 19:37:18",
+        "studentId": "S18",
+        "studentName": "许恒睿",
+        "change": -5,
+        "reason": "；",
+        "finalPoints": -12
+      },
+      {
+        "time": "2026/6/8 19:37:30",
+        "studentId": "S20",
+        "studentName": "林煌博",
+        "change": -2,
+        "reason": "；",
+        "finalPoints": 0
+      },
+      {
+        "time": "2026/6/8 19:37:53",
+        "studentId": "S12",
+        "studentName": "林正焱",
+        "change": -1,
+        "reason": "；",
+        "finalPoints": 0
+      },
+      {
+        "time": "2026/6/8 19:38:30",
+        "studentId": "S39",
+        "studentName": "朱语彤",
+        "change": -1,
+        "reason": "；",
+        "finalPoints": 0
+      },
+      {
+        "time": "2026/6/9 11:30:08",
+        "studentId": "S21",
+        "studentName": "姚俊昊",
+        "change": "+1",
+        "reason": "solo by himself",
+        "finalPoints": 9
+      },
+      {
+        "time": "2026/6/12 16:49:10",
+        "studentId": "S21",
+        "studentName": "姚俊昊",
+        "change": "+1",
+        "reason": "没收所有财产",
+        "finalPoints": 10
+      },
+      {
+        "time": "2026/6/14 18:19:18",
+        "studentId": "S13",
+        "studentName": "林子豪",
+        "change": -1,
+        "reason": "；",
+        "finalPoints": 11
+      },
+      {
+        "time": "2026/6/14 18:19:30",
+        "studentId": "S39",
+        "studentName": "朱语彤",
+        "change": -1,
+        "reason": "；",
+        "finalPoints": -1
+      },
+      {
+        "time": "2026/6/14 18:20:09",
+        "studentId": "S14",
+        "studentName": "魏俊烨",
+        "change": -2,
+        "reason": "；",
+        "finalPoints": -3
+      },
+      {
+        "time": "2026/6/14 18:20:38",
+        "studentId": "S14",
+        "studentName": "魏俊烨",
+        "change": "+1",
+        "reason": "；",
+        "finalPoints": -2
+      },
+      {
+        "time": "2026/6/14 18:21:12",
+        "studentId": "S18",
+        "studentName": "许恒睿",
+        "change": -5,
+        "reason": "；",
+        "finalPoints": -17
+      },
+      {
+        "time": "2026/6/14 18:21:18",
+        "studentId": "S14",
+        "studentName": "魏俊烨",
+        "change": -5,
+        "reason": "；",
+        "finalPoints": -7
+      },
+      {
+        "time": "2026/6/14 18:23:15",
+        "studentId": "S9",
+        "studentName": "林锦弘",
+        "change": "+2",
+        "reason": "；",
+        "finalPoints": 39
+      },
+      {
+        "time": "2026/6/14 18:23:38",
+        "studentId": "S28",
+        "studentName": "梁嘉钰",
+        "change": -1,
+        "reason": "；",
+        "finalPoints": 7
+      },
+      {
+        "time": "2026/6/14 18:23:54",
+        "studentId": "S5",
+        "studentName": "黄习羽",
+        "change": -1,
+        "reason": "没交作业",
+        "finalPoints": -28
+      },
+      {
+        "time": "2026/6/14 18:25:25",
+        "studentId": "S20",
+        "studentName": "林煌博",
+        "change": -1,
+        "reason": "；",
+        "finalPoints": -1
+      },
+      {
+        "time": "2026/6/14 18:25:51",
+        "studentId": "S14",
+        "studentName": "魏俊烨",
+        "change": "+5",
+        "reason": "积极回答",
+        "finalPoints": -2,
+        "undone": true
+      },
+      {
+        "time": "2026/6/14 18:26:02",
+        "studentId": "S14",
+        "studentName": "魏俊烨",
+        "change": -5,
+        "reason": "撤销操作 (原由: 积极回答)",
+        "finalPoints": -7
+      },
+      {
+        "time": "2026/6/14 18:26:33",
+        "studentId": "S14",
+        "studentName": "魏俊烨",
+        "change": -2,
+        "reason": "；",
+        "finalPoints": -9
+      },
+      {
+        "time": "2026/6/14 18:27:06",
+        "studentId": "S14",
+        "studentName": "魏俊烨",
+        "change": -3,
+        "reason": "；",
+        "finalPoints": -12
+      },
+      {
+        "time": "2026/6/14 18:28:58",
+        "studentId": "S14",
+        "studentName": "魏俊烨",
+        "change": -1,
+        "reason": "；",
+        "finalPoints": -13
+      },
+      {
+        "time": "2026/6/14 19:35:28",
+        "studentId": "S9",
+        "studentName": "林锦弘",
+        "change": "+1",
+        "reason": "；",
+        "finalPoints": 40
+      },
+      {
+        "time": "2026/6/14 19:37:43",
+        "studentId": "S14",
+        "studentName": "魏俊烨",
+        "change": -1,
+        "reason": "；",
+        "finalPoints": -14
+      },
+      {
+        "time": "2026/6/14 20:47:45",
+        "studentId": "S5",
+        "studentName": "黄习羽",
+        "change": -5,
+        "reason": "<strong>Killing Spring</strong><br>没收所有财产，判处以死刑，立即执行",
+        "finalPoints": -33
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S1",
+        "studentName": "蔡晨星",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 0
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S22",
+        "studentName": "陈研娜",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 1
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S2",
+        "studentName": "陈泽源",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 11
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S23",
+        "studentName": "陈芷晴",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 2
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S24",
+        "studentName": "陈子心",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 4
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S3",
+        "studentName": "程泽仁",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 9
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S25",
+        "studentName": "戴予晨",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 4
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S4",
+        "studentName": "方黄旭",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 21
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S26",
+        "studentName": "傅妤涵",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": -3
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S5",
+        "studentName": "黄习羽",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": -32
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S6",
+        "studentName": "黄御书",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 8
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S7",
+        "studentName": "李一楠",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 9
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S8",
+        "studentName": "李煜轩",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 30
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S27",
+        "studentName": "梁佳宜",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 3
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S28",
+        "studentName": "梁嘉钰",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 8
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S20",
+        "studentName": "林煌博",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 0
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S29",
+        "studentName": "林佳祺",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 11
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S9",
+        "studentName": "林锦弘",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 41
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S30",
+        "studentName": "林诗琰",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 1
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S10",
+        "studentName": "林义航",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 1
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S11",
+        "studentName": "林宇杰",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 4
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S31",
+        "studentName": "林雨晨",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 3
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S19",
+        "studentName": "林钰焯",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 3
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S12",
+        "studentName": "林正焱",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 1
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S13",
+        "studentName": "林子豪",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 12
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S32",
+        "studentName": "吕梓仪",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 4
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S14",
+        "studentName": "魏俊烨",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": -13
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S15",
+        "studentName": "魏文博",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 5
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S16",
+        "studentName": "吴景鹏",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 1
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S17",
+        "studentName": "吴晓涵",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 4
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S33",
+        "studentName": "吴语雯",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 2
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S18",
+        "studentName": "许恒睿",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": -16
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S34",
+        "studentName": "许子晴",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 1
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S21",
+        "studentName": "姚俊昊",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 11
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S35",
+        "studentName": "詹佳逸",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 3
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S36",
+        "studentName": "张玲铱",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 9
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S37",
+        "studentName": "郑辰心",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 7
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S38",
+        "studentName": "郑羽彤",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 7
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S40",
+        "studentName": "朱琪涵",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 2
+      },
+      {
+        "time": "2026/6/16 11:29:57",
+        "studentId": "S39",
+        "studentName": "朱语彤",
+        "change": "+1",
+        "reason": ";",
+        "finalPoints": 0
+      }
+    ],
+    "sortState": {
+      "column": "id",
+      "direction": "desc"
+    },
+    "leaderboardType": "realtime",
+    "turntablePrizes": [
+      {
+        "id": "_b608tgxcl",
+        "text": "免值日一天",
+        "type": "reward"
+      },
+      {
+        "id": "_ic05snk5y",
+        "text": "免作业一次",
+        "type": "reward"
+      },
+      {
+        "id": "_ob4c0x9q9",
+        "text": "谢谢参与",
+        "type": "reward"
+      },
+      {
+        "id": "_71w20fgh7",
+        "text": "小零食一包",
+        "type": "reward"
+      }
+    ],
+    "turntableCost": 0,
+    "punishmentTurntablePrizes": [
+      {
+        "id": "_3j2n3szu1",
+        "text": "值日一天"
+      },
+      {
+        "id": "_sfccih09i",
+        "text": "增加试卷一张"
+      },
+      {
+        "id": "_arwdj0ilj",
+        "text": "倒垃圾一周"
+      },
+      {
+        "id": "_xhzoww0hp",
+        "text": "再来两次"
+      },
+      {
+        "id": "_p0wui5nuq",
+        "text": "漏网之鱼"
+      }
+    ],
+    "punishmentTurntableCost": 0,
+    "quickReasons": [
+      {
+        "id": "qr_1",
+        "text": "积极回答",
+        "points": 5
+      },
+      {
+        "id": "qr_2",
+        "text": "优秀作业",
+        "points": 10
+      },
+      {
+        "id": "qr_3",
+        "text": "帮助同学",
+        "points": 3
+      },
+      {
+        "id": "qr_4",
+        "text": "上课迟到",
+        "points": -1
+      },
+      {
+        "id": "qr_5",
+        "text": "未交作业",
+        "points": -5
+      }
+    ],
+    "achievementTiers": [
+      {
+        "id": "_5m080sze5",
+        "name": "积分新秀",
+        "points": 50,
+        "level": 1
+      },
+      {
+        "id": "_962etkaic",
+        "name": "积分达人",
+        "points": 100,
+        "level": 2
+      },
+      {
+        "id": "_oxmhuohfw",
+        "name": "积分大师",
+        "points": 200,
+        "level": 3
+      },
+      {
+        "id": "_mcy6i5y21",
+        "name": "积分王者",
+        "points": 500,
+        "level": 4
+      }
+    ],
+    "dashboardSortState": {
+      "column": "name",
+      "direction": "asc"
+    },
+    "groupLeaderboardType": "avg",
+    "leaderboardSortOrder": "desc"
+  }
+}
