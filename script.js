@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const App = {
         turntableInstance: null,
         currentSpinnerId: null,
+        punishmentTurntableInstance: null,
+        punishmentSpinTargetId: null,
 
         // --- ⬇️ 新增：班级管理状态 ⬇️ ---
         metaDataKey: 'classPointsManager', // 存储班级列表和当前班级ID的Key
@@ -25,7 +27,6 @@ document.addEventListener('DOMContentLoaded', () => {
             turntableCost: 10,
             punishmentTurntablePrizes: [],
             leaderboardSortOrder: 'desc',
-            punishmentSpinTargetId: null,
             dashboardSortState: { column: 'points', direction: 'desc' },
             groupLeaderboardType: 'avg',
         },
@@ -177,7 +178,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     turntableCost: 10,
                     punishmentTurntablePrizes: [],
                     leaderboardSortOrder: 'desc',
-                    punishmentSpinTargetId: null,
                     quickReasons: [
                         { id: 'qr_1', text: '积极回答', points: 5 },
                         { id: 'qr_2', text: '优秀作业', points: 10 },
@@ -842,7 +842,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadData(isNewInstall = false) { // 接收标记
             if (!this.currentClassId) {
                 console.error("loadData 失败：currentClassId 未设置。");
-                App.state = { students: [], groups: [], rewards: [], records: [], sortState: { column: 'id', direction: 'asc' }, leaderboardType: 'realtime', turntablePrizes: [], turntableCost: 10, punishmentTurntablePrizes: [], leaderboardSortOrder: 'desc', punishmentSpinTargetId: null, quickReasons: [], achievementTiers: [] };
+                App.state = { students: [], groups: [], rewards: [], records: [], sortState: { column: 'id', direction: 'asc' }, leaderboardType: 'realtime', turntablePrizes: [], turntableCost: 10, punishmentTurntablePrizes: [], leaderboardSortOrder: 'desc', quickReasons: [], achievementTiers: [] };
                 return;
             }
 
@@ -863,7 +863,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 turntableCost: 10,
                 punishmentTurntablePrizes: [],
                 leaderboardSortOrder: 'desc',
-                punishmentSpinTargetId: null,
                 quickReasons: [
                     { id: 'qr_1', text: '积极回答', points: 5 },
                     { id: 'qr_2', text: '优秀作业', points: 10 },
@@ -1102,7 +1101,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 `检测到单班级数据：${className}\n\n选择导入方式：\n- 确定：覆盖当前班级数据\n- 取消：作为新班级导入`,
                                 () => {
                                     // 覆盖当前班级
-                                    const ds = { students: [], groups: [], rewards: [], records: [], sortState: { column: 'id', direction: 'asc' }, leaderboardType: 'realtime', turntablePrizes: [], turntableCost: 10, punishmentTurntablePrizes: [], leaderboardSortOrder: 'desc', punishmentSpinTargetId: null };
+                                    const ds = { students: [], groups: [], rewards: [], records: [], sortState: { column: 'id', direction: 'asc' }, leaderboardType: 'realtime', turntablePrizes: [], turntableCost: 10, punishmentTurntablePrizes: [], leaderboardSortOrder: 'desc' };
                                     
                                     if (importedData.data.students) {
                                         importedData.data.students.forEach(student => {
@@ -1138,7 +1137,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             );
                         } else {
                             // 旧格式的JSON数据（兼容旧版本）
-                            const ds = { students: [], groups: [], rewards: [], records: [], sortState: { column: 'id', direction: 'asc' }, leaderboardType: 'realtime', turntablePrizes: [], turntableCost: 10, punishmentTurntablePrizes: [], leaderboardSortOrder: 'desc', punishmentSpinTargetId: null };
+                            const ds = { students: [], groups: [], rewards: [], records: [], sortState: { column: 'id', direction: 'asc' }, leaderboardType: 'realtime', turntablePrizes: [], turntableCost: 10, punishmentTurntablePrizes: [], leaderboardSortOrder: 'desc' };
                             let s = false;
                             
                             if (importedData.students && importedData.groups) {
@@ -1234,7 +1233,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                                 turntableCost: 10,
                                                 punishmentTurntablePrizes: [],
                                                 leaderboardSortOrder: 'desc',
-                                                punishmentSpinTargetId: null,
                                                 quickReasons: [],
                                                 achievementTiers: [],
                                                 dashboardSortState: { column: 'points', direction: 'desc' },
@@ -1352,16 +1350,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             App.DOMElements.turntablePrizeForm.addEventListener('submit', e => App.handlers.handleTurntablePrizeFormSubmit(e));
             App.DOMElements.spinSelectForm.addEventListener('submit', e => App.handlers.handleSpinSelectFormSubmit(e));
-
-            // 惩罚大转盘相关事件
             App.DOMElements.punishmentTurntablePrizeForm.addEventListener('submit', e => App.handlers.handlePunishmentTurntablePrizeFormSubmit(e));
             App.DOMElements.punishmentSpinSelectForm.addEventListener('submit', e => App.handlers.handlePunishmentSpinSelectFormSubmit(e));
-
-            // 排行榜排序方向切换
-            if (App.DOMElements.leaderboardSortOrderContainer) {
-                App.DOMElements.leaderboardSortOrderContainer.addEventListener('click', e => App.handlers.handleLeaderboardSortOrderClick(e));
-            }
-
             App.DOMElements.bulkGroupForm.addEventListener('submit', e => App.handlers.handleBulkGroupFormSubmit(e));
             App.DOMElements.pasteImportForm.addEventListener('submit', e => App.handlers.handlePasteImportSubmit(e));
             App.DOMElements.studentPointsForm.addEventListener('submit', e => App.handlers.handleStudentPointsFormSubmit(e));
@@ -1374,11 +1364,8 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('btn-add-all-points').addEventListener('click', () => App.handlers.openAllPointsModal());
             document.getElementById('btn-add-turntable-prize').addEventListener('click', () => App.handlers.openTurntablePrizeModal());
             document.getElementById('btn-spin').addEventListener('click', () => App.handlers.openSpinSelectModal());
-
-            // 惩罚大转盘按钮
             document.getElementById('btn-add-punishment-turntable-prize').addEventListener('click', () => App.handlers.openPunishmentTurntablePrizeModal());
             document.getElementById('btn-punishment-spin').addEventListener('click', () => App.handlers.openPunishmentSpinSelectModal());
-
             document.getElementById('btn-add-student-points').addEventListener('click', () => App.handlers.openStudentPointsModal());
             document.getElementById('btn-open-quick-reason-modal').addEventListener('click', () => App.handlers.openQuickReasonModal());
             document.getElementById('btn-paste-import-students').addEventListener('click', () => App.handlers.openPasteImportModal());
@@ -1486,6 +1473,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             App.DOMElements.turntablePrizeTableBody.addEventListener('click', e => App.handlers.handleTurntablePrizeTableClick(e));
             App.DOMElements.punishmentTurntablePrizeTableBody.addEventListener('click', e => App.handlers.handlePunishmentTurntablePrizeTableClick(e));
+            if (App.DOMElements.leaderboardSortOrderContainer) {
+                App.DOMElements.leaderboardSortOrderContainer.addEventListener('click', e => App.handlers.handleLeaderboardSortOrderClick(e));
+            }
 
             document.getElementById('record-table').querySelector('tbody').addEventListener('click', e => App.handlers.handleRecordTableClick(e));
 
@@ -1589,7 +1579,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     App.handlers.initTurntable();
                     App.DOMElements.turntableCostInput.value = App.state.turntableCost;
                 }
-                // 如果用户点击的是“惩罚大转盘”，则进行初始化
+                // 如果用户点击的是“厄运大转盘”，则进行初始化
                 if (v === 'punishment-turntable') {
                     App.render.punishmentTurntablePrizes();
                     App.handlers.initPunishmentTurntable();
@@ -1626,7 +1616,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         pctx.clearRect(0, 0, pCanvas.width, pCanvas.height);
                     }
                     App.punishmentTurntableInstance = null;
-                }
                 }
 
                 // 保留其他页面的逻辑
@@ -2118,7 +2107,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             },
 
-            // 惩罚大转盘 - 排行榜排序方向切换
+            // 厄运大转盘 - 排行榜排序方向切换
             handleLeaderboardSortOrderClick: (e) => {
                 const btn = e.target.closest('.sort-order-btn');
                 if (!btn) return;
@@ -2129,7 +2118,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             },
 
-            // 惩罚大转盘 - 初始化惩罚转盘
+            // 厄运大转盘 - 初始化惩罚转盘
             initPunishmentTurntable() {
                 if (!App.DOMElements.punishmentTurntableCanvas) return;
                 if (App.punishmentTurntableInstance) {
@@ -2143,19 +2132,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 App.punishmentTurntableInstance = null;
 
                 const defaultPrizes = [
-                    { id: 'p1', text: '罚抄课文一遍', point: -5 },
-                    { id: 'p2', text: '背诵一首古诗', point: -10 },
-                    { id: 'p3', text: '打扫教室卫生', point: -15 },
-                    { id: 'p4', text: '写300字检讨', point: -20 }
+                    { id: 'ppt_1', text: '罚抄课文一遍', point: -5 },
+                    { id: 'ppt_2', text: '背诵一首古诗', point: -10 },
+                    { id: 'ppt_3', text: '打扫教室卫生', point: -15 },
+                    { id: 'ppt_4', text: '写300字检讨', point: -20 }
                 ];
-                const prizes = (App.state.punishmentTurntablePrizes && App.state.punishmentTurntablePrizes.length > 0)
-                    ? App.state.punishmentTurntablePrizes
-                    : defaultPrizes;
-                // 如果默认值被使用，保存到 state
-                if (!(App.state.punishmentTurntablePrizes && App.state.punishmentTurntablePrizes.length > 0)) {
+                if (!App.state.punishmentTurntablePrizes || App.state.punishmentTurntablePrizes.length === 0) {
                     App.state.punishmentTurntablePrizes = defaultPrizes;
                 }
-
+                const prizes = App.state.punishmentTurntablePrizes;
                 const colors = ["#8B0000", "#A52A2A", "#B22222", "#CD5C5C", "#DC143C", "#FF4500", "#FF6347", "#FF7F50"];
                 App.punishmentTurntableInstance = new Winwheel({
                     'canvasId': 'punishment-turntable-canvas',
@@ -2175,7 +2160,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             },
 
-            // 惩罚大转盘 - 打开惩罚奖品管理模态框
+            // 厄运大转盘 - 打开惩罚奖品管理模态框
             openPunishmentTurntablePrizeModal(id = null) {
                 App.DOMElements.punishmentTurntablePrizeForm.reset();
                 App.DOMElements.punishmentTurntablePrizeIdInput.value = id || '';
@@ -2189,7 +2174,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 App.ui.openModal(App.DOMElements.punishmentTurntablePrizeModal);
             },
 
-            // 惩罚大转盘 - 惩罚奖品表单提交
+            // 厄运大转盘 - 惩罚奖品表单提交
             handlePunishmentTurntablePrizeFormSubmit(e) {
                 e.preventDefault();
                 const id = App.DOMElements.punishmentTurntablePrizeIdInput.value;
@@ -2204,7 +2189,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     App.ui.showNotification('惩罚已更新！');
                 } else {
                     const newId = 'ppt_' + Date.now();
-                    if (!App.state.punishmentTurntablePrizes) App.state.punishmentTurntablePrizes = [];
                     App.state.punishmentTurntablePrizes.push({ id: newId, text: text, point: -5 });
                     App.ui.showNotification('惩罚已添加！');
                 }
@@ -2214,7 +2198,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 App.handlers.initPunishmentTurntable();
             },
 
-            // 惩罚大转盘 - 惩罚奖品表点击
+            // 厄运大转盘 - 惩罚奖品表点击
             handlePunishmentTurntablePrizeTableClick(e) {
                 const row = e.target.closest('tr');
                 if (!row) return;
@@ -2231,7 +2215,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             },
 
-            // 惩罚大转盘 - 打开选择学生模态框（只显示积分小于0的学生，不消耗积分）
+            // 厄运大转盘 - 打开选择学生模态框（只显示积分小于0的学生，不消耗积分）
             openPunishmentSpinSelectModal() {
                 if (App.punishmentTurntableInstance && App.punishmentTurntableInstance.isSpinning) return;
                 if (!App.state.punishmentTurntablePrizes || App.state.punishmentTurntablePrizes.length === 0) {
@@ -2254,7 +2238,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 App.ui.openModal(App.DOMElements.punishmentSpinSelectModal);
             },
 
-            // 惩罚大转盘 - 学生选择表单提交
+            // 厄运大转盘 - 学生选择表单提交
             handlePunishmentSpinSelectFormSubmit(e) {
                 e.preventDefault();
                 const studentId = App.DOMElements.punishmentSpinStudentSelect.value;
@@ -2264,13 +2248,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 App.state.punishmentSpinTargetId = studentId;
                 App.ui.closeModal(App.DOMElements.punishmentSpinSelectModal);
-                // 开始转动惩罚转盘
                 if (App.punishmentTurntableInstance) {
                     App.punishmentTurntableInstance.startAnimation();
                 }
             },
 
-            // 惩罚大转盘 - 转盘停止后的回调
+            // 厄运大转盘 - 转盘停止后的回调
             punishmentSpinFinished(indicatedSegment) {
                 const studentId = App.state.punishmentSpinTargetId;
                 if (!studentId) return;
@@ -2278,7 +2261,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!student) return;
                 const segmentText = indicatedSegment.text || '未知惩罚';
                 const pointChange = indicatedSegment.point || -5;
-                App.actions.addPoints(studentId, pointChange, `惩罚大转盘：${segmentText}`);
+                App.actions.changePoints(studentId, pointChange, `厄运大转盘：${segmentText}`);
                 App.render();
                 App.ui.showNotification(`【${student.name}】抽中：${segmentText}，积分${pointChange > 0 ? '+' : ''}${pointChange}分。`);
                 App.state.punishmentSpinTargetId = null;
@@ -3092,6 +3075,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             titleElement.innerText = title;
 
+            // 根据排序方向排序（正序 desc：高分在前；倒序 asc：低分在前）
             const sortOrder = App.state.leaderboardSortOrder || 'desc';
             if (App.DOMElements.leaderboardSortOrderContainer) {
                 App.DOMElements.leaderboardSortOrderContainer.querySelectorAll('.sort-order-btn').forEach(b => b.classList.toggle('active', b.dataset.order === sortOrder));
@@ -3222,10 +3206,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const tbody = App.DOMElements.punishmentTurntablePrizeTableBody;
             if (!tbody) return;
             tbody.innerHTML = '';
-            if (!App.state.punishmentTurntablePrizes || App.state.punishmentTurntablePrizes.length === 0) {
-                // 如果没有惩罚项，显示默认值
-                return;
-            }
+            if (!App.state.punishmentTurntablePrizes) return;
             App.state.punishmentTurntablePrizes.forEach(p => {
                 const tr = document.createElement('tr');
                 tr.dataset.id = p.id;
